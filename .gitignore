@@ -1,0 +1,8 @@
+*/.idea/
+*/.clion.source.upload.marker
+*/__pycache__/
+*/build/
+*/cmake-build-debug/
+
+*.trt
+

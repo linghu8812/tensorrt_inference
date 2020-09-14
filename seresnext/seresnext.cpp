@@ -8,6 +8,8 @@
 
 #include "common.h"
 
+std::map<int, std::string> imagenet_label;
+
 std::vector<std::string>readFolder(const std::string &image_path)
 {
     std::vector<std::string> image_names;
@@ -123,24 +125,35 @@ inline unsigned int getElementSize(nvinfer1::DataType t) {
 std::vector<float> prepareImage(const std::vector<cv::Mat> &vec_img, const int &BATCH_SIZE, const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
 {
     std::vector<float> result(BATCH_SIZE * DETECT_HEIGHT * DETECT_WIDTH * INPUT_CHANNEL);
+    float f_mean[3] = { 0.485, 0.456, 0.406 };
+    float f_std[3]  = { 0.229, 0.224, 0.225 };
     float *data = result.data();
     for (const cv::Mat &src_img : vec_img)
     {
         if (!src_img.data)
             continue;
         cv::Mat flt_img;
-        src_img.convertTo(flt_img, CV_32FC1, 1.0 / 255);
-        flt_img = (flt_img - 0.5) / 0.5;
+        cv::resize(src_img, flt_img, cv::Size(DETECT_HEIGHT, DETECT_WIDTH));
+        flt_img.convertTo(flt_img, CV_32FC3, 1.0 / 255);
+
+        //HWC TO CHW
+        std::vector<cv::Mat> split_img(INPUT_CHANNEL);
+        cv::split(flt_img, split_img);
+
         int channelLength = DETECT_HEIGHT * DETECT_WIDTH;
-        memcpy(data, flt_img.data, channelLength * sizeof(float));
-        data += channelLength;
+        for (int i = 0; i < INPUT_CHANNEL; ++i)
+        {
+            split_img[i] = (split_img[i] - f_mean[i]) / f_std[i];
+            memcpy(data, split_img[i].data, channelLength * sizeof(float));
+            data += channelLength;
+        }
     }
     return result;
 }
 
-void EngineInference(const std::vector<std::string> &image_list, const int &outSize,
-        const int &BATCH_SIZE, const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL, void *buffers[],
-        const std::vector<int64_t> &bufferSize, cudaStream_t stream, nvinfer1::IExecutionContext *context)
+void EngineInference(const std::vector<std::string> &image_list, const int &outSize, const int &BATCH_SIZE, const int &DETECT_WIDTH,
+        const int &DETECT_HEIGHT, const int &INPUT_CHANNEL, void *buffers[], const std::vector<int64_t> &bufferSize, cudaStream_t stream,
+        nvinfer1::IExecutionContext *context, std::map<int, std::string> imagenet_labels)
 {
     int index = 0;
     int batch_id = 0;
@@ -150,9 +163,10 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
     {
         index++;
         std::cout << "Processing: " << image_name << std::endl;
-        cv::Mat src_img = cv::imread(image_name, 0);
+        cv::Mat src_img = cv::imread(image_name);
         if (src_img.data)
         {
+            cv::cvtColor(src_img, src_img, cv::COLOR_BGR2RGB);
             vec_Mat[batch_id] = src_img.clone();
             batch_id++;
         }
@@ -193,9 +207,10 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
             for (int i = 0; i < BATCH_SIZE; i++)
             {
                 auto result = std::max_element(out + i * outSize, out + (i + 1) * outSize);
-                std::string result_name = std::to_string(result - (out + i * outSize)) + "_.jpg";
+                std::string result_name = imagenet_labels[result - (out + i * outSize)] + "_.jpg";
                 std::cout << result_name << std::endl;
-                cv::imwrite(result_name, vec_Mat[i]);
+                cv::cvtColor(vec_Mat[i], src_img, cv::COLOR_BGR2RGB);
+                cv::imwrite(result_name, src_img);
             }
 
             auto r_end = std::chrono::high_resolution_clock::now();
@@ -209,7 +224,7 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
 }
 
 void doInferenceFrieza(ICudaEngine *engine, const std::vector<std::string> &sample_images, const int &BATCH_SIZE,
-                       const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
+                       const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL, std::map<int, std::string> imagenet_labels)
 {
     //get context
     assert(engine != nullptr);
@@ -238,8 +253,8 @@ void doInferenceFrieza(ICudaEngine *engine, const std::vector<std::string> &samp
 
     int outSize = bufferSize[1] / sizeof(float) / BATCH_SIZE;
 
-    EngineInference(sample_images, outSize, BATCH_SIZE, DETECT_WIDTH,
-            DETECT_HEIGHT, INPUT_CHANNEL, buffers, bufferSize, stream, context);
+    EngineInference(sample_images, outSize, BATCH_SIZE, DETECT_WIDTH, DETECT_HEIGHT, INPUT_CHANNEL,
+            buffers, bufferSize, stream, context, imagenet_labels);
 
     // release the stream and the buffers
     cudaStreamDestroy(stream);
@@ -251,24 +266,47 @@ void doInferenceFrieza(ICudaEngine *engine, const std::vector<std::string> &samp
     engine->destroy();
 }
 
+std::map<int, std::string> readImageNetLabel(const std::string &fileName)
+{
+    std::map<int, std::string> imagenet_label;
+    std::ifstream file(fileName);
+    if (!file.is_open())
+    {
+        std::cout << "read file error: " << fileName << std::endl;
+    }
+    std::string strLine;
+    while (getline(file, strLine))
+    {
+        int pos1 = strLine.find(":");
+        std::string first = strLine.substr(0, pos1);
+        int pos2 = strLine.find_last_of("'");
+        std::string second = strLine.substr(pos1 + 3, pos2 - pos1 - 3);
+        imagenet_label.insert({atoi(first.c_str()), second});
+    }
+    file.close();
+    return imagenet_label;
+}
+
 int main(int argc, char **argv)
 {
     //Parse args
-    if (argc < 6)
+    if (argc < 7)
     {
-        std::cout << "Please design onnx file, trt file, samples folder, image size and batch size in order!" << std::endl;
+        std::cout << "Please design onnx file, trt file, samples folder, labels file, image size and batch size in order!" << std::endl;
         return -1;
     }
 
     std::string onnx_file = argv[1];
     std::string engine_file = argv[2];
     std::string sample_folder = argv[3];
-    int image_size = atoi(argv[4]);
-    int batch_size = atoi(argv[5]);
+    std::string label_file = argv[4];
+    int image_size = atoi(argv[5]);
+    int batch_size = atoi(argv[6]);
 
-    int input_channel = 1;
+    int input_channel = 3;
 
     std::vector<std::string> sample_images = readFolder(sample_folder);
+    std::map<int, std::string> imagenet_labels = readImageNetLabel(label_file);
 
     nvinfer1::ICudaEngine *engine = nullptr;
 
@@ -283,6 +321,6 @@ int main(int argc, char **argv)
         assert(engine != nullptr);
     }
 
-    doInferenceFrieza(engine, sample_images, batch_size, image_size, image_size, input_channel);
+    doInferenceFrieza(engine, sample_images, batch_size, image_size, image_size, input_channel, imagenet_labels);
     return 0;
 }

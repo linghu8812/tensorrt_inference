@@ -5,4 +5,7 @@
 */cmake-build-debug/
 
 *.trt
-
+*.onnx
+*.pt
+*symbol.json
+*.params

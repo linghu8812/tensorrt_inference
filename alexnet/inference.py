@@ -11,8 +11,8 @@ def transform(data):
     return (data.astype('float32') / 255 - rgb_mean) / rgb_std
 
 
-with open('./synset.txt', 'r') as f:
-    text_labels = [' '.join(l.split()[1:]) for l in f]
+with open('./label.txt', 'r') as f:
+    text_labels = [''.join(l.split("'")[1]) for l in f]
 
 net = models.alexnet(pretrained=True)
 

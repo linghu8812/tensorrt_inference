@@ -1,4 +1,3 @@
-import os
 import argparse
 import onnx
 import mxnet as mx
@@ -7,10 +6,7 @@ from mxnet.contrib import onnx as onnx_mxnet
 
 print('mxnet version:', mx.__version__)
 print('onnx version:', onnx.__version__)
-# make sure to install onnx-1.2.1
-# pip uninstall onnx
-# pip install onnx == 1.2.1
-assert onnx.__version__ == '1.2.1'
+assert onnx.__version__ == '1.3.0'
 
 parser = argparse.ArgumentParser(description='convert arcface models to onnx')
 # general
@@ -37,8 +33,5 @@ mx.model.save_checkpoint(args.prefix + "r", args.epoch + 1, sym, reshape_params,
 
 sym_file = f'{args.prefix + "r"}-symbol.json'
 params_file = f'{args.prefix + "r"}-{args.epoch + 1:04d}.params'
-assert os.path.exists(sym_file)
-assert os.path.exists(params_file)
 
 converted_model_path = onnx_mxnet.export_model(sym_file, params_file, [input_shape], np.float32, args.output_onnx)
-

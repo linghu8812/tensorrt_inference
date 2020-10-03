@@ -30,5 +30,5 @@ message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
 
 include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 
-add_executable(arcface_trt arcface.cpp logger.cpp)
+add_executable(arcface_trt arcface.cpp)
 target_link_libraries(arcface_trt ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY})

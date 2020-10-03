@@ -6,7 +6,7 @@
 #include "NvInfer.h"
 #include "NvOnnxParser.h"
 
-#include "common.h"
+#include "common.hpp"
 
 std::vector<std::string>readFolder(const std::string &image_path)
 {
@@ -100,26 +100,6 @@ void onnxToTRTModel(const std::string &modelFile, // name of the onnx model
     builder->destroy();
 }
 
-inline int64_t volume(const nvinfer1::Dims &d) {
-    return std::accumulate(d.d, d.d + d.nbDims, 1, std::multiplies<>());
-}
-
-inline unsigned int getElementSize(nvinfer1::DataType t) {
-    switch (t) {
-        case nvinfer1::DataType::kINT32:
-            return 4;
-        case nvinfer1::DataType::kFLOAT:
-            return 4;
-        case nvinfer1::DataType::kHALF:
-            return 2;
-        case nvinfer1::DataType::kINT8:
-            return 1;
-        default:
-            throw std::runtime_error("Invalid DataType.");
-            return 0;
-    }
-}
-
 std::vector<float> prepareImage(const std::vector<cv::Mat> &vec_img, const int &BATCH_SIZE, const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
 {
     std::vector<float> result(BATCH_SIZE * DETECT_HEIGHT * DETECT_WIDTH * INPUT_CHANNEL);
@@ -172,7 +152,7 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
             }
             // DMA the input to the GPU,  execute the batch asynchronously, and DMA it back:
             std::cout << "host2device" << std::endl;
-            CHECK(cudaMemcpyAsync(buffers[0], curInput.data(), bufferSize[0], cudaMemcpyHostToDevice, stream));
+            cudaMemcpyAsync(buffers[0], curInput.data(), bufferSize[0], cudaMemcpyHostToDevice, stream);
 
             // do inference
             std::cout << "execute" << std::endl;
@@ -187,7 +167,7 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
             std::cout << "post process" << std::endl;
             auto r_start = std::chrono::high_resolution_clock::now();
             float out[outSize * BATCH_SIZE];
-            CHECK(cudaMemcpyAsync(out, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream));
+            cudaMemcpyAsync(out, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
             cudaStreamSynchronize(stream);
 
             for (int i = 0; i < BATCH_SIZE; i++)
@@ -208,7 +188,7 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
 }
 
-void doInferenceFrieza(ICudaEngine *engine, const std::vector<std::string> &sample_images, const int &BATCH_SIZE,
+void doInferenceFrieza(nvinfer1::ICudaEngine *engine, const std::vector<std::string> &sample_images, const int &BATCH_SIZE,
                        const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
 {
     //get context
@@ -229,12 +209,12 @@ void doInferenceFrieza(ICudaEngine *engine, const std::vector<std::string> &samp
         int64_t totalSize = volume(dims) * 1 * getElementSize(dtype);
         bufferSize[i] = totalSize;
         std::cout << "binding" << i << ": " << totalSize << std::endl;
-        CHECK(cudaMalloc(&buffers[i], totalSize));
+        cudaMalloc(&buffers[i], totalSize);
     }
 
     //get stream
     cudaStream_t stream;
-    CHECK(cudaStreamCreate(&stream));
+    cudaStreamCreate(&stream);
 
     int outSize = bufferSize[1] / sizeof(float) / BATCH_SIZE;
 
@@ -243,8 +223,8 @@ void doInferenceFrieza(ICudaEngine *engine, const std::vector<std::string> &samp
 
     // release the stream and the buffers
     cudaStreamDestroy(stream);
-    CHECK(cudaFree(buffers[0]));
-    CHECK(cudaFree(buffers[1]));
+    cudaFree(buffers[0]);
+    cudaFree(buffers[1]);
 
     // destroy the engine
     context->destroy();

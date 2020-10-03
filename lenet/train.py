@@ -1,9 +1,18 @@
+import argparse
 import torch
 import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
 
-from lenet import Lenet
+from lenet import LeNet
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_path", default='./data/mnist', type=str, help="train epochs")
+parser.add_argument("--batch_size", default=64, type=int, help="batch size")
+parser.add_argument("--num_workers", default=8, type=int, help="number of workers")
+parser.add_argument("--lr", default=3e-4, type=float, help="learning rate")
+parser.add_argument("--epochs", default=100, type=int, help="train epochs")
+args = parser.parse_args()
 
 transform = {
     'train': transforms.Compose([
@@ -16,30 +25,29 @@ transform = {
     ]),
 }
 
-trainset = torchvision.datasets.MNIST(root='./data/mnist', train=True,
+trainset = torchvision.datasets.MNIST(root=args.data_path, train=True,
                                       download=True, transform=transform['train'])
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=64,
-                                          shuffle=True, num_workers=8)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
+                                          shuffle=True, num_workers=args.num_workers)
 
-testset = torchvision.datasets.MNIST(root='./data/mnist', train=False,
+testset = torchvision.datasets.MNIST(root=args.data_path, train=False,
                                      download=True, transform=transform['test'])
-testloader = torch.utils.data.DataLoader(testset, batch_size=64,
-                                         shuffle=False, num_workers=8)
+testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
+                                         shuffle=False, num_workers=args.num_workers)
 
-net = Lenet()
+net = LeNet()
 print(net)
 
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters(), lr=3e-4, weight_decay=5e-4)
-exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=5e-4)
+exp_lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(args.epochs / 2.5), gamma=0.1)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 net.to(device)
-precision = 0.0
-preprecision = 0.0
-for epoch in range(100):  # loop over the dataset multiple times
+max_precision = 0.0
+for epoch in range(args.epochs):  # loop over the dataset multiple times
     running_loss = 0.0
     avg_loss = 0.0
     k = 0
@@ -81,10 +89,10 @@ for epoch in range(100):  # loop over the dataset multiple times
 
     precision = 100 * correct / total
     print('Accuracy of the network on the %d epoch: %.2f %%' % (epoch + 1, precision))
-    if precision > preprecision:
+    if precision > max_precision:
         print('Better Accuracy: %.4f %%, Saving Net to mnist_net.pt.' % precision)
         torch.save(net, 'mnist_net.pt')
-        preprecision = precision
+        max_precision = precision
     exp_lr_scheduler.step()
 
 print('Finished Training')

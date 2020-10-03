@@ -1,9 +1,10 @@
+from abc import ABC
 import torch.nn as nn
 
 
-class Lenet(nn.Module):
+class LeNet(nn.Module, ABC):
     def __init__(self,  num_classes=10):
-        super(Lenet, self).__init__()
+        super(LeNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(1, 6, kernel_size=5),
             nn.ReLU(inplace=True),

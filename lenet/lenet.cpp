@@ -1,127 +1,76 @@
-#include <iostream>
-#include <fstream>
-#include <dirent.h>
-#include <opencv2/opencv.hpp>
-
-#include "NvInfer.h"
-#include "NvOnnxParser.h"
-
+#include "lenet.h"
+#include "yaml-cpp/yaml.h"
 #include "common.hpp"
 
-std::vector<std::string>readFolder(const std::string &image_path)
-{
-    std::vector<std::string> image_names;
-    auto dir = opendir(image_path.c_str());
-
-    if ((dir) != nullptr)
-    {
-        struct dirent *entry;
-        entry = readdir(dir);
-        while (entry)
-        {
-            auto temp = image_path + "/" + entry->d_name;
-            if (strcmp(entry->d_name, "") == 0 || strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-            {
-                entry = readdir(dir);
-                continue;
-            }
-            image_names.push_back(temp);
-            entry = readdir(dir);
-        }
-    }
-    return image_names;
+LeNet::LeNet(const std::string &config_file) {
+    YAML::Node root = YAML::LoadFile(config_file);
+    YAML::Node config = root["lenet"];
+    onnx_file = config["onnx_file"].as<std::string>();
+    engine_file = config["engine_file"].as<std::string>();
+    BATCH_SIZE = config["BATCH_SIZE"].as<int>();
+    INPUT_CHANNEL = config["INPUT_CHANNEL"].as<int>();
+    IMAGE_WIDTH = config["IMAGE_WIDTH"].as<int>();
+    IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
 }
 
-bool readTrtFile(const std::string &engineFile, //name of the engine file
-                 nvinfer1::ICudaEngine *&engine)
-{
-    std::string cached_engine;
-    std::fstream file;
-    std::cout << "loading filename from:" << engineFile << std::endl;
-    nvinfer1::IRuntime *trtRuntime;
-    file.open(engineFile, std::ios::binary | std::ios::in);
+LeNet::~LeNet() = default;
 
-    if (!file.is_open()) {
-        std::cout << "read file error: " << engineFile << std::endl;
-        cached_engine = "";
+void LeNet::LoadEngine() {
+    // create and load engine
+    std::fstream existEngine;
+    existEngine.open(engine_file, std::ios::in);
+    if (existEngine) {
+        readTrtFile(engine_file, engine);
+        assert(engine != nullptr);
+    } else {
+        onnxToTRTModel(onnx_file, engine_file, engine, BATCH_SIZE);
+        assert(engine != nullptr);
     }
-
-    while (file.peek() != EOF) {
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        cached_engine.append(buffer.str());
-    }
-    file.close();
-
-    trtRuntime = nvinfer1::createInferRuntime(gLogger.getTRTLogger());
-    engine = trtRuntime->deserializeCudaEngine(cached_engine.data(), cached_engine.size(), nullptr);
-    std::cout << "deserialize done" << std::endl;
-
-    return true;
 }
 
-void onnxToTRTModel(const std::string &modelFile, // name of the onnx model
-                    const std::string &filename,  // name of saved engine
-                    nvinfer1::ICudaEngine *&engine, const int &BATCH_SIZE)
-{
-    // create the builder
-    nvinfer1::IBuilder *builder = nvinfer1::createInferBuilder(gLogger.getTRTLogger());
-    assert(builder != nullptr);
+bool LeNet::InferenceFolder(const std::string &folder_name) {
+    std::vector<std::string> sample_images = readFolder(folder_name);
+    //get context
+    // assert(engine != nullptr);
+    context = engine->createExecutionContext();
+    assert(context != nullptr);
 
-    const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-    auto network = builder->createNetworkV2(explicitBatch);
-    auto config = builder->createBuilderConfig();
+    //get buffers
+    assert(engine->getNbBindings() == 2);
+    void *buffers[2];
+    std::vector<int64_t> bufferSize;
+    int nbBindings = engine->getNbBindings();
+    bufferSize.resize(nbBindings);
 
-    auto parser = nvonnxparser::createParser(*network, gLogger.getTRTLogger());
-    if (!parser->parseFromFile(modelFile.c_str(), static_cast<int>(gLogger.getReportableSeverity()))) {
-        gLogError << "Failure while parsing ONNX file" << std::endl;
+    for (int i = 0; i < nbBindings; ++i) {
+        nvinfer1::Dims dims = engine->getBindingDimensions(i);
+        nvinfer1::DataType dtype = engine->getBindingDataType(i);
+        int64_t totalSize = volume(dims) * 1 * getElementSize(dtype);
+        bufferSize[i] = totalSize;
+        std::cout << "binding" << i << ": " << totalSize << std::endl;
+        cudaMalloc(&buffers[i], totalSize);
     }
-    // Build the engine
-    builder->setMaxBatchSize(BATCH_SIZE);
-    config->setMaxWorkspaceSize(16_MiB);
-    config->setFlag(nvinfer1::BuilderFlag::kFP16);
 
-    std::cout << "start building engine" << std::endl;
-    engine = builder->buildEngineWithConfig(*network, *config);
-    std::cout << "build engine done" << std::endl;
-    assert(engine);
-    // we can destroy the parser
-    parser->destroy();
-    // save engine
-    nvinfer1::IHostMemory *data = engine->serialize();
-    std::ofstream file;
-    file.open(filename, std::ios::binary | std::ios::out);
-    std::cout << "writing engine file..." << std::endl;
-    file.write((const char *) data->data(), data->size());
-    std::cout << "save engine file done" << std::endl;
-    file.close();
-    // then close everything down
-    network->destroy();
-    builder->destroy();
+    //get stream
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
+    int outSize = bufferSize[1] / sizeof(float) / BATCH_SIZE;
+
+    EngineInference(sample_images, outSize, buffers, bufferSize, stream);
+
+    // release the stream and the buffers
+    cudaStreamDestroy(stream);
+    cudaFree(buffers[0]);
+    cudaFree(buffers[1]);
+
+    // destroy the engine
+    context->destroy();
+    engine->destroy();
 }
 
-std::vector<float> prepareImage(const std::vector<cv::Mat> &vec_img, const int &BATCH_SIZE, const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
-{
-    std::vector<float> result(BATCH_SIZE * DETECT_HEIGHT * DETECT_WIDTH * INPUT_CHANNEL);
-    float *data = result.data();
-    for (const cv::Mat &src_img : vec_img)
-    {
-        if (!src_img.data)
-            continue;
-        cv::Mat flt_img;
-        src_img.convertTo(flt_img, CV_32FC1, 1.0 / 255);
-        flt_img = (flt_img - 0.5) / 0.5;
-        int channelLength = DETECT_HEIGHT * DETECT_WIDTH;
-        memcpy(data, flt_img.data, channelLength * sizeof(float));
-        data += channelLength;
-    }
-    return result;
-}
-
-void EngineInference(const std::vector<std::string> &image_list, const int &outSize,
-        const int &BATCH_SIZE, const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL, void *buffers[],
-        const std::vector<int64_t> &bufferSize, cudaStream_t stream, nvinfer1::IExecutionContext *context)
-{
+void LeNet::EngineInference(const std::vector<std::string> &image_list, const int &outSize,void **buffers,
+                            const std::vector<int64_t> &bufferSize, cudaStream_t stream) {
     int index = 0;
     int batch_id = 0;
     std::vector<cv::Mat> vec_Mat(BATCH_SIZE);
@@ -140,7 +89,7 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
         {
             auto t_start_pre = std::chrono::high_resolution_clock::now();
             std::cout << "prepareImage" << std::endl;
-            std::vector<float>curInput = prepareImage(vec_Mat, BATCH_SIZE, DETECT_WIDTH, DETECT_HEIGHT, INPUT_CHANNEL);
+            std::vector<float>curInput = prepareImage(vec_Mat);
             auto t_end_pre = std::chrono::high_resolution_clock::now();
             float total_pre = std::chrono::duration<float, std::milli>(t_end_pre - t_start_pre).count();
             std::cout << "prepare image take: " << total_pre << " ms." << std::endl;
@@ -188,81 +137,19 @@ void EngineInference(const std::vector<std::string> &image_list, const int &outS
     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
 }
 
-void doInferenceFrieza(nvinfer1::ICudaEngine *engine, const std::vector<std::string> &sample_images, const int &BATCH_SIZE,
-                       const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
-{
-    //get context
-    assert(engine != nullptr);
-    nvinfer1::IExecutionContext *context = engine->createExecutionContext();
-    assert(context != nullptr);
-
-    //get buffers
-    assert(engine->getNbBindings() == 2);
-    void *buffers[2];
-    std::vector<int64_t> bufferSize;
-    int nbBindings = engine->getNbBindings();
-    bufferSize.resize(nbBindings);
-
-    for (int i = 0; i < nbBindings; ++i) {
-        nvinfer1::Dims dims = engine->getBindingDimensions(i);
-        nvinfer1::DataType dtype = engine->getBindingDataType(i);
-        int64_t totalSize = volume(dims) * 1 * getElementSize(dtype);
-        bufferSize[i] = totalSize;
-        std::cout << "binding" << i << ": " << totalSize << std::endl;
-        cudaMalloc(&buffers[i], totalSize);
-    }
-
-    //get stream
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
-
-    int outSize = bufferSize[1] / sizeof(float) / BATCH_SIZE;
-
-    EngineInference(sample_images, outSize, BATCH_SIZE, DETECT_WIDTH,
-            DETECT_HEIGHT, INPUT_CHANNEL, buffers, bufferSize, stream, context);
-
-    // release the stream and the buffers
-    cudaStreamDestroy(stream);
-    cudaFree(buffers[0]);
-    cudaFree(buffers[1]);
-
-    // destroy the engine
-    context->destroy();
-    engine->destroy();
-}
-
-int main(int argc, char **argv)
-{
-    //Parse args
-    if (argc < 6)
+std::vector<float> LeNet::prepareImage(std::vector<cv::Mat> &vec_img) {
+    std::vector<float> result(BATCH_SIZE * IMAGE_WIDTH * IMAGE_HEIGHT * INPUT_CHANNEL);
+    float *data = result.data();
+    for (const cv::Mat &src_img : vec_img)
     {
-        std::cout << "Please design onnx file, trt file, samples folder, image size and batch size in order!" << std::endl;
-        return -1;
+        if (!src_img.data)
+            continue;
+        cv::Mat flt_img;
+        src_img.convertTo(flt_img, CV_32FC1, 1.0 / 255);
+        flt_img = (flt_img - 0.5) / 0.5;
+        int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
+        memcpy(data, flt_img.data, channelLength * sizeof(float));
+        data += channelLength;
     }
-
-    std::string onnx_file = argv[1];
-    std::string engine_file = argv[2];
-    std::string sample_folder = argv[3];
-    int image_size = atoi(argv[4]);
-    int batch_size = atoi(argv[5]);
-
-    int input_channel = 1;
-
-    std::vector<std::string> sample_images = readFolder(sample_folder);
-
-    nvinfer1::ICudaEngine *engine = nullptr;
-
-    // create and load engine
-    std::fstream existEngine;
-    existEngine.open(engine_file, std::ios::in);
-    if (existEngine) {
-        readTrtFile(engine_file, engine);
-        assert(engine != nullptr);
-    } else {
-        onnxToTRTModel(onnx_file, engine_file, engine, batch_size);
-        assert(engine != nullptr);
-    }
-
-    doInferenceFrieza(engine, sample_images, batch_size, image_size, image_size, input_channel);
-    return 0;
+    return result;
 }

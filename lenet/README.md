@@ -22,5 +22,5 @@ make -j
 
 ## 5.run lenet_trt
 ```
-./lenet_trt ../mnist_net.onnx ../mnist_net.trt ../samples/ 28 10
+./lenet_trt ../config.yaml ../samples
 ```

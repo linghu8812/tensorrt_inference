@@ -1,0 +1,12 @@
+seresnext:
+    onnx_file:     "../yolov5x.onnx"
+    engine_file:   "../yolov5x.trt"
+    labels_file:   "../coco.names"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   640
+    IMAGE_HEIGHT:  640
+    obj_threshold: 0.4
+    nms_threshold: 0.45
+    stride:        [8, 16, 32]
+    anchors:       [[10,13], [16,30], [33,23], [30,61], [62,45], [59,119], [116,90], [156,198], [373,326]]

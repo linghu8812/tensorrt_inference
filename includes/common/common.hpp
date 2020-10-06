@@ -172,4 +172,23 @@ std::map<int, std::string> readImageNetLabel(const std::string &fileName)
     return imagenet_label;
 }
 
+std::map<int, std::string> readCOCOLabel(const std::string &fileName)
+{
+    std::map<int, std::string> coco_label;
+    std::ifstream file(fileName);
+    if (!file.is_open())
+    {
+        std::cout << "read file error: " << fileName << std::endl;
+    }
+    std::string strLine;
+    int index = 0;
+    while (getline(file, strLine))
+    {
+        coco_label.insert({index, strLine});
+        index++;
+    }
+    file.close();
+    return coco_label;
+}
+
 #endif //COMMON_H

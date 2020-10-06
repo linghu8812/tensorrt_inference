@@ -28,7 +28,12 @@ find_package(OpenCV REQUIRED)
 message(STATUS "Find OpenCV include at ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
 
-include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+set(COMMON_INCLUDE ../includes/common)
+set(YAML_INCLUDE ../includes/yaml-cpp/include)
+set(YAML_LIB_DIR ../includes/yaml-cpp/libs)
 
-add_executable(yolov5_trt yolov5.cpp)
-target_link_libraries(yolov5_trt ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY})
+include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${COMMON_INCLUDE} ${YAML_INCLUDE})
+link_directories(${YAML_LIB_DIR})
+
+add_executable(yolov5_trt main.cpp yolov5.cpp)
+target_link_libraries(yolov5_trt ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} yaml-cpp)

@@ -1,12 +1,11 @@
-//
-// Created by linghu8812 on 2020/10/3.
-//
-
-#ifndef SERESNEXT_TRT_COMMON_H
-#define SERESNEXT_TRT_COMMON_H
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <cuda_runtime_api.h>
 #include <numeric>
+#include <fstream>
+#include <dirent.h>
+#include "NvOnnxParser.h"
 #include "logging.h"
 
 // These is necessary if we want to be able to write 1_GiB instead of 1.0_GiB.
@@ -152,4 +151,25 @@ void onnxToTRTModel(const std::string &modelFile, // name of the onnx model
     builder->destroy();
 }
 
-#endif //SERESNEXT_TRT_COMMON_H
+std::map<int, std::string> readImageNetLabel(const std::string &fileName)
+{
+    std::map<int, std::string> imagenet_label;
+    std::ifstream file(fileName);
+    if (!file.is_open())
+    {
+        std::cout << "read file error: " << fileName << std::endl;
+    }
+    std::string strLine;
+    while (getline(file, strLine))
+    {
+        int pos1 = strLine.find(":");
+        std::string first = strLine.substr(0, pos1);
+        int pos2 = strLine.find_last_of("'");
+        std::string second = strLine.substr(pos1 + 3, pos2 - pos1 - 3);
+        imagenet_label.insert({atoi(first.c_str()), second});
+    }
+    file.close();
+    return imagenet_label;
+}
+
+#endif //COMMON_H

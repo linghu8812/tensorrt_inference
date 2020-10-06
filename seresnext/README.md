@@ -19,5 +19,5 @@ make -j
 
 ## 4.run seresnext_trt
 ```
-./seresnext_trt ../se_resnext101_32x4d.onnx ../se_resnext101_32x4d.trt ../samples/ ../label.txt 224 1
+./seresnext_trt ../config.yaml ../samples
 ```

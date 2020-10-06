@@ -17,5 +17,5 @@ make -j
 
 ## 4.run alexnet_trt
 ```
-./alexnet_trt ../alexnet.onnx ../alexnet.trt ../samples/ ../label.txt 224 1
+./alexnet_trt ../config.yaml ../samples
 ```

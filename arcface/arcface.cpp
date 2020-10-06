@@ -1,159 +1,38 @@
-#include <iostream>
-#include <dirent.h>
-#include <opencv2/opencv.hpp>
-
-#include "NvInfer.h"
-#include "NvOnnxParser.h"
-
+#include "arcface.h"
+#include "yaml-cpp/yaml.h"
 #include "common.hpp"
 
-bool readTrtFile(const std::string &engineFile, //name of the engine file
-                 nvinfer1::ICudaEngine *&engine)
-{
-    std::string cached_engine;
-    std::fstream file;
-    std::cout << "loading filename from:" << engineFile << std::endl;
-    nvinfer1::IRuntime *trtRuntime;
-    file.open(engineFile, std::ios::binary | std::ios::in);
-
-    if (!file.is_open()) {
-        std::cout << "read file error: " << engineFile << std::endl;
-        cached_engine = "";
-    }
-
-    while (file.peek() != EOF) {
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        cached_engine.append(buffer.str());
-    }
-    file.close();
-
-    trtRuntime = nvinfer1::createInferRuntime(gLogger.getTRTLogger());
-    engine = trtRuntime->deserializeCudaEngine(cached_engine.data(), cached_engine.size(), nullptr);
-    std::cout << "deserialize done" << std::endl;
-
-    return true;
+ArcFace::ArcFace(const std::string &config_file) {
+    YAML::Node root = YAML::LoadFile(config_file);
+    YAML::Node config = root["arcface"];
+    onnx_file = config["onnx_file"].as<std::string>();
+    engine_file = config["engine_file"].as<std::string>();
+    BATCH_SIZE = config["BATCH_SIZE"].as<int>();
+    INPUT_CHANNEL = config["INPUT_CHANNEL"].as<int>();
+    IMAGE_WIDTH = config["IMAGE_WIDTH"].as<int>();
+    IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
 }
 
-void onnxToTRTModel(const std::string &modelFile, // name of the onnx model
-                    const std::string &filename,  // name of saved engine
-                    nvinfer1::ICudaEngine *&engine, const int &BATCH_SIZE)
-{
-    // create the builder
-    nvinfer1::IBuilder *builder = nvinfer1::createInferBuilder(gLogger.getTRTLogger());
-    assert(builder != nullptr);
+ArcFace::~ArcFace() = default;
 
-    const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-    auto network = builder->createNetworkV2(explicitBatch);
-    auto config = builder->createBuilderConfig();
-
-    auto parser = nvonnxparser::createParser(*network, gLogger.getTRTLogger());
-    if (!parser->parseFromFile(modelFile.c_str(), static_cast<int>(gLogger.getReportableSeverity()))) {
-        gLogError << "Failure while parsing ONNX file" << std::endl;
+void ArcFace::LoadEngine() {
+    // create and load engine
+    std::fstream existEngine;
+    existEngine.open(engine_file, std::ios::in);
+    if (existEngine) {
+        readTrtFile(engine_file, engine);
+        assert(engine != nullptr);
+    } else {
+        onnxToTRTModel(onnx_file, engine_file, engine, BATCH_SIZE);
+        assert(engine != nullptr);
     }
-    // Build the engine
-    builder->setMaxBatchSize(BATCH_SIZE);
-    config->setMaxWorkspaceSize(16_MiB);
-    config->setFlag(nvinfer1::BuilderFlag::kFP16);
-
-    std::cout << "start building engine" << std::endl;
-    engine = builder->buildEngineWithConfig(*network, *config);
-    std::cout << "build engine done" << std::endl;
-    assert(engine);
-    // we can destroy the parser
-    parser->destroy();
-    // save engine
-    nvinfer1::IHostMemory *data = engine->serialize();
-    std::ofstream file;
-    file.open(filename, std::ios::binary | std::ios::out);
-    std::cout << "writing engine file..." << std::endl;
-    file.write((const char *) data->data(), data->size());
-    std::cout << "save engine file done" << std::endl;
-    file.close();
-    // then close everything down
-    network->destroy();
-    builder->destroy();
 }
 
-std::vector<float> prepareImage(const cv::Mat &src_img, const int &BATCH_SIZE, const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
-{
-    std::vector<float> result(BATCH_SIZE * DETECT_HEIGHT * DETECT_WIDTH * INPUT_CHANNEL, 0);
-    float *data = result.data();
-    if (!src_img.data)
-        return result;
-    cv::Mat flt_img;
-    cv::resize(src_img, flt_img, cv::Size(DETECT_HEIGHT, DETECT_WIDTH));
-    flt_img.convertTo(flt_img, CV_32FC3);
-
-    //HWC TO CHW
-    std::vector<cv::Mat> split_img(INPUT_CHANNEL);
-    cv::split(flt_img, split_img);
-
-    int channelLength = DETECT_HEIGHT * DETECT_WIDTH;
-    for (int i = 0; i < INPUT_CHANNEL; ++i)
-    {
-        memcpy(data, split_img[i].data, channelLength * sizeof(float));
-        data += channelLength;
-    }
-    return result;
-}
-
-void EngineInference(const std::string &image_name, const int &outSize, const int &BATCH_SIZE, const int &DETECT_WIDTH,
-        const int &DETECT_HEIGHT, const int &INPUT_CHANNEL, void *buffers[], const std::vector<int64_t> &bufferSize, cudaStream_t stream,
-        nvinfer1::IExecutionContext *context, cv::Mat &norm_feature)
-{
-    norm_feature = cv::Mat::zeros(1, outSize, CV_32FC1);
-    float total_time = 0;
-    std::cout << "Processing: " << image_name << std::endl;
-    cv::Mat src_img = cv::imread(image_name);
-    if (!src_img.data)
-        return;
-    cv::cvtColor(src_img, src_img, cv::COLOR_BGR2RGB);
-    auto t_start_pre = std::chrono::high_resolution_clock::now();
-    std::cout << "prepareImage" << std::endl;
-    std::vector<float>curInput = prepareImage(src_img, BATCH_SIZE, DETECT_WIDTH, DETECT_HEIGHT, INPUT_CHANNEL);
-    auto t_end_pre = std::chrono::high_resolution_clock::now();
-    float total_pre = std::chrono::duration<float, std::milli>(t_end_pre - t_start_pre).count();
-    std::cout << "prepare image take: " << total_pre << " ms." << std::endl;
-    total_time += total_pre;
-
-    if (!curInput.data())
-        std::cout << "prepare images ERROR!" << std::endl;
-
-    // DMA the input to the GPU,  execute the batch asynchronously, and DMA it back:
-    std::cout << "host2device" << std::endl;
-    cudaMemcpyAsync(buffers[0], curInput.data(), bufferSize[0], cudaMemcpyHostToDevice, stream);
-
-    // do inference
-    std::cout << "execute" << std::endl;
-    auto t_start = std::chrono::high_resolution_clock::now();
-    context->execute(BATCH_SIZE, buffers);
-    auto t_end = std::chrono::high_resolution_clock::now();
-    float total_inf = std::chrono::duration<float, std::milli>(t_end - t_start).count();
-    std::cout << "Inference take: " << total_inf << " ms." << std::endl;
-    total_time += total_inf;
-    std::cout << "execute success" << std::endl;
-    std::cout << "device2host" << std::endl;
-    std::cout << "post process" << std::endl;
-    auto r_start = std::chrono::high_resolution_clock::now();
-    float out[outSize * BATCH_SIZE];
-    cudaMemcpyAsync(out, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
-    cudaStreamSynchronize(stream);
-    cv::Mat rst_feature = cv::Mat(1, outSize, CV_32FC1, out);
-    cv::normalize(rst_feature, norm_feature);
-    auto r_end = std::chrono::high_resolution_clock::now();
-    float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
-    std::cout << "Post process take: " << total_res << " ms." << std::endl;
-    total_time += total_res;
-    std::cout << "Total processing time is " << total_time << "ms" << std::endl;
-}
-
-void doInferenceFrieza(nvinfer1::ICudaEngine *engine, const std::string &image_name1, const std::string &image_name2, const int &BATCH_SIZE,
-                       const int &DETECT_WIDTH, const int &DETECT_HEIGHT, const int &INPUT_CHANNEL)
-{
+bool ArcFace::InferenceFolder(const std::string &folder_name) {
+    std::vector<std::string> sample_images = readFolder(folder_name);
     //get context
     assert(engine != nullptr);
-    nvinfer1::IExecutionContext *context = engine->createExecutionContext();
+    context = engine->createExecutionContext();
     assert(context != nullptr);
 
     //get buffers
@@ -178,15 +57,7 @@ void doInferenceFrieza(nvinfer1::ICudaEngine *engine, const std::string &image_n
 
     int outSize = bufferSize[1] / sizeof(float) / BATCH_SIZE;
 
-    cv::Mat feature1, feature2;
-    EngineInference(image_name1, outSize, BATCH_SIZE, DETECT_WIDTH, DETECT_HEIGHT, INPUT_CHANNEL,
-            buffers, bufferSize, stream, context, feature1);
-
-    EngineInference(image_name2, outSize, BATCH_SIZE, DETECT_WIDTH, DETECT_HEIGHT, INPUT_CHANNEL,
-                    buffers, bufferSize, stream, context, feature2);
-
-    cv::Mat similarity = feature2 * feature1.t();
-    std::cout << "The similarity of the two images is: " << similarity.at<float>(0, 0) << "!" << std::endl;
+    EngineInference(sample_images, outSize, buffers, bufferSize, stream);
 
     // release the stream and the buffers
     cudaStreamDestroy(stream);
@@ -198,42 +69,102 @@ void doInferenceFrieza(nvinfer1::ICudaEngine *engine, const std::string &image_n
     engine->destroy();
 }
 
-int main(int argc, char **argv)
-{
-    //Parse args
-    if (argc < 6)
+void ArcFace::EngineInference(const std::vector<std::string> &image_list, const int &outSize, void **buffers,
+                              const std::vector<int64_t> &bufferSize, cudaStream_t stream) {
+    int index = 0;
+    int batch_id = 0;
+    std::vector<cv::Mat> vec_Mat(BATCH_SIZE);
+    cv::Mat face_feature(image_list.size(), outSize, CV_32FC1);
+    float total_time = 0;
+    for (const std::string &image_name : image_list)
     {
-        std::cout << "Please design onnx file, trt file, samples folder, image size and batch size in order!" << std::endl;
-        return -1;
+        index++;
+        std::cout << "Processing: " << image_name << std::endl;
+        cv::Mat src_img = cv::imread(image_name);
+        if (src_img.data)
+        {
+            vec_Mat[batch_id] = src_img.clone();
+            batch_id++;
+        }
+        if (batch_id == BATCH_SIZE or index == image_list.size())
+        {
+            auto t_start_pre = std::chrono::high_resolution_clock::now();
+            std::cout << "prepareImage" << std::endl;
+            std::vector<float>curInput = prepareImage(vec_Mat);
+            auto t_end_pre = std::chrono::high_resolution_clock::now();
+            float total_pre = std::chrono::duration<float, std::milli>(t_end_pre - t_start_pre).count();
+            std::cout << "prepare image take: " << total_pre << " ms." << std::endl;
+            total_time += total_pre;
+            batch_id = 0;
+            if (!curInput.data()) {
+                std::cout << "prepare images ERROR!" << std::endl;
+                continue;
+            }
+            // DMA the input to the GPU,  execute the batch asynchronously, and DMA it back:
+            std::cout << "host2device" << std::endl;
+            cudaMemcpyAsync(buffers[0], curInput.data(), bufferSize[0], cudaMemcpyHostToDevice, stream);
+
+            // do inference
+            std::cout << "execute" << std::endl;
+            auto t_start = std::chrono::high_resolution_clock::now();
+            context->execute(BATCH_SIZE, buffers);
+            auto t_end = std::chrono::high_resolution_clock::now();
+            float total_inf = std::chrono::duration<float, std::milli>(t_end - t_start).count();
+            std::cout << "Inference take: " << total_inf << " ms." << std::endl;
+            total_time += total_inf;
+            std::cout << "execute success" << std::endl;
+            std::cout << "device2host" << std::endl;
+            std::cout << "post process" << std::endl;
+            auto r_start = std::chrono::high_resolution_clock::now();
+            float out[outSize * BATCH_SIZE];
+            cudaMemcpyAsync(out, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
+            cudaStreamSynchronize(stream);
+            int rowSize = index % BATCH_SIZE == 0 ? BATCH_SIZE : index % BATCH_SIZE;
+            cv::Mat feature(rowSize, outSize, CV_32FC1);
+            ReshapeandNormalize(out, feature, rowSize, outSize);
+            feature.copyTo(face_feature.rowRange(index - rowSize, index));
+            auto r_end = std::chrono::high_resolution_clock::now();
+            float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
+            std::cout << "Post process take: " << total_res << " ms." << std::endl;
+            total_time += total_res;
+            vec_Mat = std::vector<cv::Mat>(BATCH_SIZE);
+        }
     }
+    std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
+    cv::Mat similarity = face_feature * face_feature.t();
+    std::cout << "The similarity matrix of the image folder is:\n" << (similarity + 1) / 2 << "!" << std::endl;
+}
 
-    std::string onnx_file = argv[1];
-    std::string engine_file = argv[2];
-    std::string sample_folder = argv[3];
-    int image_size = atoi(argv[4]);
-    int batch_size = atoi(argv[5]);
+std::vector<float> ArcFace::prepareImage(std::vector<cv::Mat> &vec_img) {
+    std::vector<float> result(BATCH_SIZE * IMAGE_WIDTH * IMAGE_HEIGHT * INPUT_CHANNEL);
+    float *data = result.data();
+    for (const cv::Mat &src_img : vec_img)
+    {
+        if (!src_img.data)
+            continue;
+        cv::Mat flt_img;
+        cv::resize(src_img, flt_img, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+        flt_img.convertTo(flt_img, CV_32FC3);
 
-    int input_channel = 3;
+        //HWC TO CHW
+        std::vector<cv::Mat> split_img(INPUT_CHANNEL);
+        cv::split(flt_img, split_img);
 
-    std::string image_name1 = sample_folder + "/test1.jpg";
-    std::string image_name2 = sample_folder + "/test2.jpg";
-
-    std::cout << image_name1 << std::endl;
-    std::cout << image_name2 << std::endl;
-
-    nvinfer1::ICudaEngine *engine = nullptr;
-
-    // create and load engine
-    std::fstream existEngine;
-    existEngine.open(engine_file, std::ios::in);
-    if (existEngine) {
-        readTrtFile(engine_file, engine);
-        assert(engine != nullptr);
-    } else {
-        onnxToTRTModel(onnx_file, engine_file, engine, batch_size);
-        assert(engine != nullptr);
+        int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
+        for (int i = 0; i < INPUT_CHANNEL; ++i)
+        {
+            memcpy(data, split_img[i].data, channelLength * sizeof(float));
+            data += channelLength;
+        }
     }
+    return result;
+}
 
-    doInferenceFrieza(engine, image_name1, image_name2 , batch_size, image_size, image_size, input_channel);
-    return 0;
+void ArcFace::ReshapeandNormalize(float *out, cv::Mat &feature, const int &MAT_SIZE, const int &outSize) {
+    for (int i = 0; i < MAT_SIZE; i++)
+    {
+        cv::Mat onefeature(1, outSize, CV_32FC1, out + i * outSize);
+        cv::normalize(onefeature, onefeature);
+        onefeature.copyTo(feature.row(i));
+    }
 }

@@ -1,4 +1,4 @@
-#include "seresnext.h"
+#include "arcface.h"
 
 int main(int argc, char **argv)
 {
@@ -9,8 +9,8 @@ int main(int argc, char **argv)
     }
     std::string config_file = argv[1];
     std::string folder_name = argv[2];
-    SEResNeXt SEResNeXt(config_file);
-    SEResNeXt.LoadEngine();
-    SEResNeXt.InferenceFolder(folder_name);
+    ArcFace ArcFace(config_file);
+    ArcFace.LoadEngine();
+    ArcFace.InferenceFolder(folder_name);
     return 0;
 }

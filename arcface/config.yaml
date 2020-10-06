@@ -1,0 +1,7 @@
+arcface:
+    onnx_file:     "../arcface_r100.onnx"
+    engine_file:   "../arcface_r100.trt"
+    BATCH_SIZE:    4
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   112
+    IMAGE_HEIGHT:  112

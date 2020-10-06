@@ -12,8 +12,8 @@ parser = argparse.ArgumentParser(description='convert arcface models to onnx')
 # general
 parser.add_argument('--prefix', default='./model', help='prefix to load model.')
 parser.add_argument('--epoch', default=0, type=int, help='epoch number to load model.')
-parser.add_argument('--input-shape', default=(1, 3, 112, 112), type=tuple, help='input shape.')
-parser.add_argument('--output-onnx', default='./arcface_r100.onnx', help='path to write onnx model.')
+parser.add_argument('--input_shape', nargs='+', default=[1, 3, 112, 112], type=int, help='input shape.')
+parser.add_argument('--output_onnx', default='./arcface_r100.onnx', help='path to write onnx model.')
 args = parser.parse_args()
 
 input_shape = args.input_shape

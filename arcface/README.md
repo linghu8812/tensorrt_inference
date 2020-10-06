@@ -8,7 +8,7 @@
 
 ## 2.Export ONNX Model
 ```
-python3 export_onnx.py
+python3 export_onnx.py --input_shape 4 3 112 112
 ```
 
 ## 3.Build arcface_trt Project
@@ -20,9 +20,13 @@ make -j
 
 ## 4.run arcface_trt
 ```
-./arcface_trt ../arcface_r100.onnx ../arcface_r100.trt ../samples 112 1
+./arcface_trt ../config.yaml ../samples
 ```
 **output:**
 ```
-The similarity of the two images is: 0.698439!
+The similarity matrix of the image folder is:
+[1, 0.83112532, 0.44810191, 0.44390032;
+ 0.83112532, 1, 0.43372691, 0.43485713;
+ 0.44810191, 0.43372691, 1, 0.81798339;
+ 0.44390032, 0.43485713, 0.81798339, 1]!
 ```

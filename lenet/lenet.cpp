@@ -74,6 +74,7 @@ void LeNet::EngineInference(const std::vector<std::string> &image_list, const in
     int index = 0;
     int batch_id = 0;
     std::vector<cv::Mat> vec_Mat(BATCH_SIZE);
+    std::vector<std::string> result_names(BATCH_SIZE);
     float total_time = 0;
     for (const std::string &image_name : image_list)
     {
@@ -122,16 +123,19 @@ void LeNet::EngineInference(const std::vector<std::string> &image_list, const in
             for (int i = 0; i < BATCH_SIZE; i++)
             {
                 auto result = std::max_element(out + i * outSize, out + (i + 1) * outSize);
-                std::string result_name = std::to_string(result - (out + i * outSize)) + "_.jpg";
-                std::cout << result_name << std::endl;
-                cv::imwrite(result_name, vec_Mat[i]);
+                result_names[i] = std::to_string(result - (out + i * outSize)) + "_.jpg";
             }
 
             auto r_end = std::chrono::high_resolution_clock::now();
             float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
             std::cout << "Post process take: " << total_res << " ms." << std::endl;
             total_time += total_res;
+            for (int i = 0; i < BATCH_SIZE; i++)
+            {
+                cv::imwrite(result_names[i], vec_Mat[i]);
+            }
             vec_Mat = std::vector<cv::Mat>(BATCH_SIZE);
+            result_names = std::vector<std::string>(BATCH_SIZE);
         }
     }
     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;

@@ -1,4 +1,5 @@
 lenet:
+    model_file:    "../mnist_net.pt"
     onnx_file:     "../mnist_net.onnx"
     engine_file:   "../mnist_net.trt"
     BATCH_SIZE:    10

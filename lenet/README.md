@@ -20,7 +20,12 @@ cmake ..
 make -j
 ```
 
-## 5.run lenet_trt
+## 5.Run lenet_trt
 ```
 ./lenet_trt ../config.yaml ../samples
 ```
+
+## 5.Benchmark(2080Ti)
+model|PyTorch|TensorRT|
+---|---|---
+inference time|0.4ms|0.046ms

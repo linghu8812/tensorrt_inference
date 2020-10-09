@@ -9,3 +9,4 @@
 *.pt
 *symbol.json
 *.params
+*.weights

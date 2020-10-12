@@ -1,11 +1,11 @@
-seresnext:
+Yolov4:
     onnx_file:     "../yolov4.onnx"
     engine_file:   "../yolov4.trt"
     labels_file:   "../coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
-    IMAGE_WIDTH:   608
-    IMAGE_HEIGHT:  608
+    IMAGE_WIDTH:   416
+    IMAGE_HEIGHT:  416
     obj_threshold: 0.4
     nms_threshold: 0.45
     stride:        [8, 16, 32]

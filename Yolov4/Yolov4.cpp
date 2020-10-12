@@ -4,7 +4,7 @@
 
 YOLOv4::YOLOv4(const std::string &config_file) {
     YAML::Node root = YAML::LoadFile(config_file);
-    YAML::Node config = root["seresnext"];
+    YAML::Node config = root["Yolov4"];
     onnx_file = config["onnx_file"].as<std::string>();
     engine_file = config["engine_file"].as<std::string>();
     labels_file = config["labels_file"].as<std::string>();

@@ -23,10 +23,12 @@ make -j
 ```
 
 ## 5.Inference Time Benchmark
-resolution|darknet|TensorRT|
----|---|---
-416x416||4.2ms
-608x608||6.3ms
+model|resolution|darknet|TensorRT|
+---|---|---|---
+yolov4|416x416||4.2ms
+yolov4|608x608||6.3ms
+yolov4-voc_mobilenetv2|416x416||2.2ms
+yolov4-voc_mobilenetv2_mish|416x416||2.5ms
 
 ## 6.Results
 ![](prediction.jpg)

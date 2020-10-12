@@ -57,5 +57,6 @@ models|framework|instruction
 [alexnet](alexnet)|MXNet Gluon|MXNet Gluon example
 [seresnext](seresnext)|PyTorch|PyTorch example
 [arcface](arcface)|MXNet Symbol|MXNet Symbol and face recognition example
+[Yolov4](Yolov4)|darknet|darknet and object detection example
 [yolov5](yolov5)|PyTorch|PyTorch and object detection example
  

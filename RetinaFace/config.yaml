@@ -1,0 +1,13 @@
+RetinaFace:
+    onnx_file:     "../RetinaFace.onnx"
+    engine_file:   "../RetinaFace.trt"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   640
+    IMAGE_HEIGHT:  640
+    obj_threshold: 0.5
+    nms_threshold: 0.45
+    feature_sizes: [400, 1600, 6400]
+    feature_steps: [32, 16, 8]
+    feature_maps:  [20, 40, 80]
+    anchor_sizes:  [[512, 256], [128, 64], [32, 16]]

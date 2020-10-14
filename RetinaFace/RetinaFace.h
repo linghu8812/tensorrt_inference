@@ -2,7 +2,6 @@
 #define RETINAFACE_TRT_RETINAFACE_H
 
 #include <opencv2/opencv.hpp>
-#include <Eigen/Core>
 #include "NvInfer.h"
 
 class RetinaFace{
@@ -32,7 +31,7 @@ private:
     std::vector<std::vector<FaceRes>> postProcess(const std::vector<cv::Mat> &vec_Mat, float *output_1, float *output_2, float *output_3,
             const int &outSize_1, const int &outSize_2, const int &outSize_3);
     void NmsDetect(std::vector<FaceRes> &detections);
-    float IOUCalculate(const FaceBox &det_a, const FaceBox &det_b);
+    static float IOUCalculate(const FaceBox &det_a, const FaceBox &det_b);
 
     std::string onnx_file;
     std::string engine_file;
@@ -44,7 +43,7 @@ private:
     int IMAGE_HEIGHT;
     float obj_threshold;
     float nms_threshold;
-    Eigen::MatrixXf priorbox_matrix;
+    cv::Mat refer_matrix;
 
     int anchor_num = 2;
     int bbox_head = 4;

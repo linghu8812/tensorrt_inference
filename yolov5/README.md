@@ -27,3 +27,9 @@ make -j
 ```
 ./yolov5_trt ../config.yaml ../samples
 ```
+
+## 5.Inference Time Benchmark
+model|resolution|PyTorch|TensorRT|
+---|---|---|---
+yolov5s|640x640| |2.5ms
+yolov5x|640x640| |11.3ms

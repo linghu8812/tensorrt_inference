@@ -24,12 +24,12 @@ public:
 private:
     void EngineInference(const std::vector<std::string> &image_list, const int &outSize,void **buffers,
                          const std::vector<int64_t> &bufferSize, cudaStream_t stream);
+    void GenerateReferMatrix();
     std::vector<float> prepareImage(std::vector<cv::Mat> & vec_img);
     std::vector<std::vector<DetectRes>> postProcess(const std::vector<cv::Mat> &vec_Mat, float *output, const int &outSize);
     void NmsDetect(std::vector <DetectRes> &detections);
     float IOUCalculate(const DetectRes &det_a, const DetectRes &det_b);
     static float sigmoid(float in);
-    static float exponential(float in);
     std::string onnx_file;
     std::string engine_file;
     std::string labels_file;
@@ -43,6 +43,9 @@ private:
     nvinfer1::IExecutionContext *context = nullptr;
     float obj_threshold;
     float nms_threshold;
+    int refer_rows;
+    int refer_cols;
+    cv::Mat refer_matrix;
     std::vector<int> stride;
     std::vector<std::vector<int>> anchors;
     std::vector<std::vector<int>> grids;

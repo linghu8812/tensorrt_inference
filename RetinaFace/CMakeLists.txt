@@ -28,15 +28,11 @@ find_package(OpenCV REQUIRED)
 message(STATUS "Find OpenCV include at ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
 
-# Eigen3
-find_package(Eigen3 REQUIRED)
-message(STATUS "Find Eigen3 include at ${EIGEN3_INCLUDE_DIR}")
-
 set(COMMON_INCLUDE ../includes/common)
 set(YAML_INCLUDE ../includes/yaml-cpp/include)
 set(YAML_LIB_DIR ../includes/yaml-cpp/libs)
 
-include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${COMMON_INCLUDE} ${YAML_INCLUDE})
+include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${COMMON_INCLUDE} ${YAML_INCLUDE})
 link_directories(${YAML_LIB_DIR})
 
 add_executable(RetinaFace_trt main.cpp RetinaFace.cpp)

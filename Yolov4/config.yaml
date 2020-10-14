@@ -4,8 +4,8 @@ Yolov4:
     labels_file:   "../coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
-    IMAGE_WIDTH:   416
-    IMAGE_HEIGHT:  416
+    IMAGE_WIDTH:   608
+    IMAGE_HEIGHT:  608
     obj_threshold: 0.4
     nms_threshold: 0.45
     stride:        [8, 16, 32]

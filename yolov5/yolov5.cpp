@@ -255,16 +255,18 @@ void YOLOv5::NmsDetect(std::vector<DetectRes> &detections) {
 }
 
 float YOLOv5::IOUCalculate(const YOLOv5::DetectRes &det_a, const YOLOv5::DetectRes &det_b) {
-    cv::Point2f center_a(det_a.x + det_a.w / 2, det_a.y + det_a.h / 2);
-    cv::Point2f center_b(det_b.x + det_b.w / 2, det_b.y + det_b.h / 2);
-    cv::Point2f left_up(std::min(det_a.x, det_b.x),std::min(det_a.y, det_b.y));
-    cv::Point2f right_down(std::max(det_a.x + det_a.w, det_b.x + det_b.w),std::max(det_a.y + det_a.h, det_b.y + det_b.h));
+    cv::Point2f center_a(det_a.x, det_a.y);
+    cv::Point2f center_b(det_b.x, det_b.y);
+    cv::Point2f left_up(std::min(det_a.x - det_a.w / 2, det_b.x - det_b.w / 2),
+                        std::min(det_a.y - det_a.h / 2, det_b.y - det_b.h / 2));
+    cv::Point2f right_down(std::max(det_a.x + det_a.w / 2, det_b.x + det_b.w / 2),
+                           std::max(det_a.y + det_a.h / 2, det_b.y + det_b.h / 2));
     float distance_d = (center_a - center_b).x * (center_a - center_b).x + (center_a - center_b).y * (center_a - center_b).y;
     float distance_c = (left_up - right_down).x * (left_up - right_down).x + (left_up - right_down).y * (left_up - right_down).y;
-    float inter_l = det_a.x > det_b.x ? det_a.x : det_b.x;
-    float inter_t = det_a.y > det_b.y ? det_a.y : det_b.y;
-    float inter_r = det_a.x + det_a.w < det_b.x + det_b.w ? det_a.x + det_a.w : det_b.x + det_b.w;
-    float inter_b = det_a.y + det_a.h < det_b.y + det_b.h ? det_a.y + det_a.h : det_b.y + det_b.h;
+    float inter_l = det_a.x - det_a.w / 2 > det_b.x - det_b.w / 2 ? det_a.x - det_a.w / 2 : det_b.x - det_b.w / 2;
+    float inter_t = det_a.y - det_a.h / 2 > det_b.y - det_b.h / 2 ? det_a.y - det_a.h / 2 : det_b.y - det_b.h / 2;
+    float inter_r = det_a.x + det_a.w / 2 < det_b.x + det_b.w / 2 ? det_a.x + det_a.w / 2 : det_b.x + det_b.w / 2;
+    float inter_b = det_a.y + det_a.h / 2 < det_b.y + det_b.h / 2 ? det_a.y + det_a.h / 2 : det_b.y + det_b.h / 2;
     if (inter_b < inter_t || inter_r < inter_l)
         return 0;
     float inter_area = (inter_b - inter_t) * (inter_r - inter_l);

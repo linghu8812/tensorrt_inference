@@ -178,22 +178,24 @@ void RetinaFace::EngineInference(const std::vector<std::string> &image_list, con
             vec_Mat = std::vector<cv::Mat>(BATCH_SIZE);
         }
     }
+    std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
 }
 
 void RetinaFace::GenerateAnchors() {
     float base_cx = 7.5;
     float base_cy = 7.5;
 
-    priorbox_matrix = Eigen::MatrixXf(bbox_head, out1_step);
+    refer_matrix = cv::Mat(out1_step, bbox_head, CV_32FC1);
     int line = 0;
     for(size_t feature_map = 0; feature_map < feature_maps.size(); feature_map++) {
         for (int height = 0; height < feature_maps[feature_map]; ++height) {
             for (int width = 0; width < feature_maps[feature_map]; ++width) {
                 for (int anchor = 0; anchor < anchor_sizes[feature_map].size(); ++anchor) {
-                    float anchor_min_size = anchor_sizes[feature_map][anchor];
-                    float cx = base_cx + width * feature_steps[feature_map];
-                    float cy = base_cy + height * feature_steps[feature_map];
-                    priorbox_matrix.col(line) << cx, cy, anchor_min_size, anchor_min_size;
+                    float *row = refer_matrix.ptr<float>(line);
+                    row[0] = base_cx + width * feature_steps[feature_map];
+                    row[1] = base_cy + height * feature_steps[feature_map];
+                    row[2] = anchor_sizes[feature_map][anchor];
+                    row[3] = anchor_sizes[feature_map][anchor];
                     line++;
                 }
             }
@@ -239,35 +241,35 @@ std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std:
         float width_scale  = (float)src_img.cols / (float)IMAGE_WIDTH;
         float height_scale = (float)src_img.rows / (float)IMAGE_HEIGHT;
 
-        Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>, Eigen::Unaligned > score_matrix(
-                out_1, 1, out1_step);
-        Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>, Eigen::Unaligned > bbox_matrix(
-                out_2, bbox_head, out2_step / bbox_head);
-        Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>, Eigen::Unaligned > landmark_matrix(
-                out_3, landmark_head, out3_step / landmark_head);
+        cv::Mat score_matrix = cv::Mat(out1_step, 1, CV_32FC1, out_1);
+        cv::Mat bbox_matrix = cv::Mat(out2_step / bbox_head, bbox_head, CV_32FC1, out_2);
+        cv::Mat landmark_matrix = cv::Mat(out3_step / landmark_head, landmark_head, CV_32FC1, out_3);
 
-        auto score = score_matrix.row(0);
-        for (int item = 0; item < score.cols(); ++item) {
-            if(score[item] > obj_threshold){
+        for (int item = 0; item < score_matrix.rows; ++item) {
+            float score = score_matrix.ptr<float>(item)[0];
+            if(score > obj_threshold){
                 FaceRes headbox;
-                headbox.confidence = score[item];
+                headbox.confidence = score;
+                auto *anchor = refer_matrix.ptr<float>(item);
+                auto *bbox = bbox_matrix.ptr<float>(item);
+                auto *mark = landmark_matrix.ptr<float>(item);
 
-                headbox.face_box.x = (priorbox_matrix(0,item) + bbox_matrix(0,item) * priorbox_matrix(2,item)) * width_scale;
-                headbox.face_box.y = (priorbox_matrix(1,item) + bbox_matrix(1,item) * priorbox_matrix(3,item)) * height_scale;
-                headbox.face_box.w = priorbox_matrix(2,item) * exp(bbox_matrix(2,item)) * width_scale;
-                headbox.face_box.h = priorbox_matrix(3,item) * exp(bbox_matrix(3,item)) * height_scale;
+                headbox.face_box.x = (anchor[0] + bbox[0] * anchor[2]) * width_scale;
+                headbox.face_box.y = (anchor[1] + bbox[1] * anchor[3]) * height_scale;
+                headbox.face_box.w = anchor[2] * exp(bbox[2]) * width_scale;
+                headbox.face_box.h = anchor[3] * exp(bbox[3]) * height_scale;
 
                 headbox.keypoints = {
-                        cv::Point2f((priorbox_matrix(0,item) + landmark_matrix(0, item) * priorbox_matrix(2,item)) * width_scale,
-                                    (priorbox_matrix(1,item) + landmark_matrix(1, item) * priorbox_matrix(3,item)) * height_scale),
-                        cv::Point2f((priorbox_matrix(0,item) + landmark_matrix(2, item) * priorbox_matrix(2,item)) * width_scale,
-                                    (priorbox_matrix(1,item) + landmark_matrix(3, item) * priorbox_matrix(3,item)) * height_scale),
-                        cv::Point2f((priorbox_matrix(0,item) + landmark_matrix(4, item) * priorbox_matrix(2,item)) * width_scale,
-                                    (priorbox_matrix(1,item) + landmark_matrix(5, item) * priorbox_matrix(3,item)) * height_scale),
-                        cv::Point2f((priorbox_matrix(0,item) + landmark_matrix(6, item) * priorbox_matrix(2,item)) * width_scale,
-                                    (priorbox_matrix(1,item) + landmark_matrix(7, item) * priorbox_matrix(3,item)) * height_scale),
-                        cv::Point2f((priorbox_matrix(0,item) + landmark_matrix(8, item) * priorbox_matrix(2,item)) * width_scale,
-                                    (priorbox_matrix(1,item) + landmark_matrix(9, item) * priorbox_matrix(3,item)) * height_scale)
+                        cv::Point2f((anchor[0] + mark[0] * anchor[2]) * width_scale,
+                                    (anchor[1] + mark[1] * anchor[3]) * height_scale),
+                        cv::Point2f((anchor[0] + mark[2] * anchor[2]) * width_scale,
+                                    (anchor[1] + mark[3] * anchor[3]) * height_scale),
+                        cv::Point2f((anchor[0] + mark[4] * anchor[2]) * width_scale,
+                                    (anchor[1] + mark[5] * anchor[3]) * height_scale),
+                        cv::Point2f((anchor[0] + mark[6] * anchor[2]) * width_scale,
+                                    (anchor[1] + mark[7] * anchor[3]) * height_scale),
+                        cv::Point2f((anchor[0] + mark[8] * anchor[2]) * width_scale,
+                                    (anchor[1] + mark[9] * anchor[3]) * height_scale)
                 };
                 result.push_back(headbox);
             }

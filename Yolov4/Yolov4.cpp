@@ -23,6 +23,12 @@ YOLOv4::YOLOv4(const std::string &config_file) {
             {3, int(IMAGE_WIDTH / stride[1]), int(IMAGE_HEIGHT / stride[1])},
             {3, int(IMAGE_WIDTH / stride[2]), int(IMAGE_HEIGHT / stride[2])},
     };
+    refer_rows = 0;
+    refer_cols = 6;
+    for (const std::vector<int> &grid : grids) {
+        refer_rows += std::accumulate(grid.begin(), grid.end(), 1, std::multiplies<int>());
+    }
+    GenerateReferMatrix();
     class_colors.resize(CATEGORY);
     srand((int) time(nullptr));
     for (cv::Scalar &class_color : class_colors)
@@ -169,6 +175,30 @@ void YOLOv4::EngineInference(const std::vector<std::string> &image_list, const i
     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
 }
 
+void YOLOv4::GenerateReferMatrix() {
+    refer_matrix = cv::Mat(refer_rows, refer_cols, CV_32FC1);
+    int position = 0;
+    for (int n = 0; n < (int)grids.size(); n++)
+    {
+        for (int c = 0; c < grids[n][0]; c++)
+        {
+            std::vector<int> anchor = anchors[n * grids[n][0] + c];
+            for (int h = 0; h < grids[n][1]; h++)
+                for (int w = 0; w < grids[n][2]; w++)
+                {
+                    float *row = refer_matrix.ptr<float>(position);
+                    row[0] = w;
+                    row[1] = grids[n][1];
+                    row[2] = h;
+                    row[3] = grids[n][2];
+                    row[4] = anchor[0];
+                    row[5] = anchor[1];
+                    position++;
+                }
+        }
+    }
+}
+
 std::vector<float> YOLOv4::prepareImage(std::vector<cv::Mat> &vec_img) {
     std::vector<float> result(BATCH_SIZE * IMAGE_WIDTH * IMAGE_HEIGHT * INPUT_CHANNEL);
     float *data = result.data();
@@ -202,30 +232,21 @@ std::vector<std::vector<YOLOv4::DetectRes>> YOLOv4::postProcess(const std::vecto
     {
         std::vector<DetectRes> result;
         float *out = output + index * outSize;
-        int position = 0;
-        for (int n = 0; n < (int)grids.size(); n++)
-        {
-            for (int c = 0; c < grids[n][0]; c++)
-            {
-                std::vector<int> anchor = anchors[n * grids[n][0] + c];
-                for (int h = 0; h < grids[n][1]; h++)
-                    for (int w = 0; w < grids[n][2]; w++)
-                    {
-                        float *row = out + position * (CATEGORY + 5);
-                        position++;
-                        DetectRes box;
-                        auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
-                        box.prob = sigmoid(row[4]) * sigmoid(row[max_pos - row]);
-                        if (box.prob < obj_threshold)
-                            continue;
-                        box.classes = max_pos - row - 5;
-                        box.x = (sigmoid(row[0]) + w) / grids[n][1] * src_img.cols;
-                        box.y = (sigmoid(row[1]) + h) / grids[n][2] * src_img.rows;
-                        box.w = exponential(row[2]) * anchor[0] / IMAGE_WIDTH * src_img.cols;
-                        box.h = exponential(row[3]) * anchor[1] / IMAGE_HEIGHT * src_img.rows;
-                        result.push_back(box);
-                    }
-            }
+        cv::Mat result_matrix = cv::Mat(refer_rows, CATEGORY + 5, CV_32FC1, out);
+        for (int index = 0; index < refer_rows; index++) {
+            DetectRes box;
+            float *row = result_matrix.ptr<float>(index);
+            auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
+            box.prob = sigmoid(row[4]) * sigmoid(row[max_pos - row]);
+            if (box.prob < obj_threshold)
+                continue;
+            box.classes = max_pos - row - 5;
+            float *anchor = refer_matrix.ptr<float>(index);
+            box.x = (sigmoid(row[0]) + anchor[0]) / anchor[1] * src_img.cols;
+            box.y = (sigmoid(row[1]) + anchor[2]) / anchor[3] * src_img.rows;
+            box.w = exp(row[2]) * anchor[4] / IMAGE_WIDTH * src_img.cols;
+            box.h = exp(row[3]) * anchor[5] / IMAGE_HEIGHT * src_img.rows;
+            result.push_back(box);
         }
         NmsDetect(result);
         vec_result.push_back(result);
@@ -255,16 +276,18 @@ void YOLOv4::NmsDetect(std::vector<DetectRes> &detections) {
 }
 
 float YOLOv4::IOUCalculate(const YOLOv4::DetectRes &det_a, const YOLOv4::DetectRes &det_b) {
-    cv::Point2f center_a(det_a.x + det_a.w / 2, det_a.y + det_a.h / 2);
-    cv::Point2f center_b(det_b.x + det_b.w / 2, det_b.y + det_b.h / 2);
-    cv::Point2f left_up(std::min(det_a.x, det_b.x),std::min(det_a.y, det_b.y));
-    cv::Point2f right_down(std::max(det_a.x + det_a.w, det_b.x + det_b.w),std::max(det_a.y + det_a.h, det_b.y + det_b.h));
+    cv::Point2f center_a(det_a.x, det_a.y);
+    cv::Point2f center_b(det_b.x, det_b.y);
+    cv::Point2f left_up(std::min(det_a.x - det_a.w / 2, det_b.x - det_b.w / 2),
+                        std::min(det_a.y - det_a.h / 2, det_b.y - det_b.h / 2));
+    cv::Point2f right_down(std::max(det_a.x + det_a.w / 2, det_b.x + det_b.w / 2),
+                           std::max(det_a.y + det_a.h / 2, det_b.y + det_b.h / 2));
     float distance_d = (center_a - center_b).x * (center_a - center_b).x + (center_a - center_b).y * (center_a - center_b).y;
     float distance_c = (left_up - right_down).x * (left_up - right_down).x + (left_up - right_down).y * (left_up - right_down).y;
-    float inter_l = det_a.x > det_b.x ? det_a.x : det_b.x;
-    float inter_t = det_a.y > det_b.y ? det_a.y : det_b.y;
-    float inter_r = det_a.x + det_a.w < det_b.x + det_b.w ? det_a.x + det_a.w : det_b.x + det_b.w;
-    float inter_b = det_a.y + det_a.h < det_b.y + det_b.h ? det_a.y + det_a.h : det_b.y + det_b.h;
+    float inter_l = det_a.x - det_a.w / 2 > det_b.x - det_b.w / 2 ? det_a.x - det_a.w / 2 : det_b.x - det_b.w / 2;
+    float inter_t = det_a.y - det_a.h / 2 > det_b.y - det_b.h / 2 ? det_a.y - det_a.h / 2 : det_b.y - det_b.h / 2;
+    float inter_r = det_a.x + det_a.w / 2 < det_b.x + det_b.w / 2 ? det_a.x + det_a.w / 2 : det_b.x + det_b.w / 2;
+    float inter_b = det_a.y + det_a.h / 2 < det_b.y + det_b.h / 2 ? det_a.y + det_a.h / 2 : det_b.y + det_b.h / 2;
     if (inter_b < inter_t || inter_r < inter_l)
         return 0;
     float inter_area = (inter_b - inter_t) * (inter_r - inter_l);
@@ -277,8 +300,4 @@ float YOLOv4::IOUCalculate(const YOLOv4::DetectRes &det_a, const YOLOv4::DetectR
 
 float YOLOv4::sigmoid(float in){
     return 1.f / (1.f + exp(-in));
-}
-
-float YOLOv4::exponential(float in){
-    return exp(in);
 }

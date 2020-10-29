@@ -27,6 +27,8 @@ make -j
 ```
 ./yolov5_trt ../config.yaml ../samples
 ```
+predict results:
+![](prediction.jpg)
 
 ## 5.Inference Time Benchmark
 model|resolution|PyTorch|TensorRT|

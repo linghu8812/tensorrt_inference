@@ -176,8 +176,11 @@ std::vector<float> YOLOv5::prepareImage(std::vector<cv::Mat> &vec_img) {
     {
         if (!src_img.data)
             continue;
-        cv::Mat flt_img;
-        cv::resize(src_img, flt_img, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+        float ratio = float(IMAGE_WIDTH) / float(src_img.cols) < float(IMAGE_HEIGHT) / float(src_img.rows) ? float(IMAGE_WIDTH) / float(src_img.cols) : float(IMAGE_HEIGHT) / float(src_img.rows);
+        cv::Mat flt_img = cv::Mat::zeros(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_8UC3);
+        cv::Mat rsz_img;
+        cv::resize(src_img, rsz_img, cv::Size(), ratio, ratio);
+        rsz_img.copyTo(flt_img(cv::Rect(0, 0, rsz_img.cols, rsz_img.rows)));
         flt_img.convertTo(flt_img, CV_32FC3, 1.0 / 255);
 
         //HWC TO CHW
@@ -201,6 +204,7 @@ std::vector<std::vector<YOLOv5::DetectRes>> YOLOv5::postProcess(const std::vecto
     for (const cv::Mat &src_img : vec_Mat)
     {
         std::vector<DetectRes> result;
+        float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
         float *out = output + index * outSize;
         int position = 0;
         for (int n = 0; n < (int)grids.size(); n++)
@@ -219,10 +223,10 @@ std::vector<std::vector<YOLOv5::DetectRes>> YOLOv5::postProcess(const std::vecto
                         if (box.prob < obj_threshold)
                             continue;
                         box.classes = max_pos - row - 5;
-                        box.x = (row[0] * 2 - 0.5 + w) / grids[n][1] * src_img.cols;
-                        box.y = (row[1] * 2 - 0.5 + h) / grids[n][2] * src_img.rows;
-                        box.w = pow(row[2] * 2, 2) * anchor[0] / IMAGE_WIDTH * src_img.cols;
-                        box.h = pow(row[3] * 2, 2) * anchor[1] / IMAGE_HEIGHT * src_img.rows;
+                        box.x = (row[0] * 2 - 0.5 + w) / grids[n][1] * IMAGE_WIDTH * ratio;
+                        box.y = (row[1] * 2 - 0.5 + h) / grids[n][2] * IMAGE_HEIGHT * ratio;
+                        box.w = pow(row[2] * 2, 2) * anchor[0] * ratio;
+                        box.h = pow(row[3] * 2, 2) * anchor[1] * ratio;
                         result.push_back(box);
                     }
             }

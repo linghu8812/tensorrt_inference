@@ -134,20 +134,25 @@ void RetinaFace::EngineInference(const std::vector<std::string> &image_list, con
             std::cout << "device2host" << std::endl;
             std::cout << "post process" << std::endl;
             auto r_start = std::chrono::high_resolution_clock::now();
-            float out_1[outSize[0] * BATCH_SIZE];
-            float out_2[outSize[1] * BATCH_SIZE];
-            float out_3[outSize[2] * BATCH_SIZE];
+            auto *out_1 = new float[outSize[0] * BATCH_SIZE];
+            auto *out_2 = new float[outSize[1] * BATCH_SIZE];
+            auto *out_3 = new float[outSize[2] * BATCH_SIZE];
             cudaMemcpyAsync(out_1, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
             cudaMemcpyAsync(out_2, buffers[2], bufferSize[2], cudaMemcpyDeviceToHost, stream);
             cudaMemcpyAsync(out_3, buffers[3], bufferSize[3], cudaMemcpyDeviceToHost, stream);
             cudaStreamSynchronize(stream);
-            auto faces = postProcess(vec_Mat, out_1, out_2, out_3, outSize[0], outSize[1], outSize[3]);
+            auto faces = postProcess(vec_Mat, out_1, out_2, out_3, outSize[0], outSize[1], outSize[2]);
+            delete[] out_1;
+            delete[] out_2;
+            delete[] out_3;
             auto r_end = std::chrono::high_resolution_clock::now();
             float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
             std::cout << "Post process take: " << total_res << " ms." << std::endl;
             for (int i = 0; i < (int)vec_Mat.size(); i++)
             {
                 auto org_img = vec_Mat[i];
+                if (!org_img.data)
+                    continue;
                 auto rects = faces[i];
                 cv::cvtColor(org_img, org_img, cv::COLOR_BGR2RGB);
                 for(const auto &rect : rects)
@@ -210,8 +215,11 @@ std::vector<float> RetinaFace::prepareImage(std::vector<cv::Mat> &vec_img) {
     {
         if (!src_img.data)
             continue;
-        cv::Mat flt_img;
-        cv::resize(src_img, flt_img, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+        float ratio = float(IMAGE_WIDTH) / float(src_img.cols) < float(IMAGE_HEIGHT) / float(src_img.rows) ? float(IMAGE_WIDTH) / float(src_img.cols) : float(IMAGE_HEIGHT) / float(src_img.rows);
+        cv::Mat flt_img = cv::Mat::zeros(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_8UC3);
+        cv::Mat rsz_img;
+        cv::resize(src_img, rsz_img, cv::Size(), ratio, ratio);
+        rsz_img.copyTo(flt_img(cv::Rect(0, 0, rsz_img.cols, rsz_img.rows)));
         flt_img.convertTo(flt_img, CV_32FC3);
 
         //HWC TO CHW
@@ -238,8 +246,7 @@ std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std:
         float *out_1 = output_1 + index * outSize_1;
         float *out_2 = output_2 + index * outSize_2;
         float *out_3 = output_3 + index * outSize_3;
-        float width_scale  = (float)src_img.cols / (float)IMAGE_WIDTH;
-        float height_scale = (float)src_img.rows / (float)IMAGE_HEIGHT;
+        float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
 
         cv::Mat score_matrix = cv::Mat(out1_step, 1, CV_32FC1, out_1);
         cv::Mat bbox_matrix = cv::Mat(out2_step / bbox_head, bbox_head, CV_32FC1, out_2);
@@ -254,22 +261,22 @@ std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std:
                 auto *bbox = bbox_matrix.ptr<float>(item);
                 auto *mark = landmark_matrix.ptr<float>(item);
 
-                headbox.face_box.x = (anchor[0] + bbox[0] * anchor[2]) * width_scale;
-                headbox.face_box.y = (anchor[1] + bbox[1] * anchor[3]) * height_scale;
-                headbox.face_box.w = anchor[2] * exp(bbox[2]) * width_scale;
-                headbox.face_box.h = anchor[3] * exp(bbox[3]) * height_scale;
+                headbox.face_box.x = (anchor[0] + bbox[0] * anchor[2]) * ratio;
+                headbox.face_box.y = (anchor[1] + bbox[1] * anchor[3]) * ratio;
+                headbox.face_box.w = anchor[2] * exp(bbox[2]) * ratio;
+                headbox.face_box.h = anchor[3] * exp(bbox[3]) * ratio;
 
                 headbox.keypoints = {
-                        cv::Point2f((anchor[0] + mark[0] * anchor[2]) * width_scale,
-                                    (anchor[1] + mark[1] * anchor[3]) * height_scale),
-                        cv::Point2f((anchor[0] + mark[2] * anchor[2]) * width_scale,
-                                    (anchor[1] + mark[3] * anchor[3]) * height_scale),
-                        cv::Point2f((anchor[0] + mark[4] * anchor[2]) * width_scale,
-                                    (anchor[1] + mark[5] * anchor[3]) * height_scale),
-                        cv::Point2f((anchor[0] + mark[6] * anchor[2]) * width_scale,
-                                    (anchor[1] + mark[7] * anchor[3]) * height_scale),
-                        cv::Point2f((anchor[0] + mark[8] * anchor[2]) * width_scale,
-                                    (anchor[1] + mark[9] * anchor[3]) * height_scale)
+                        cv::Point2f((anchor[0] + mark[0] * anchor[2]) * ratio,
+                                    (anchor[1] + mark[1] * anchor[3]) * ratio),
+                        cv::Point2f((anchor[0] + mark[2] * anchor[2]) * ratio,
+                                    (anchor[1] + mark[3] * anchor[3]) * ratio),
+                        cv::Point2f((anchor[0] + mark[4] * anchor[2]) * ratio,
+                                    (anchor[1] + mark[5] * anchor[3]) * ratio),
+                        cv::Point2f((anchor[0] + mark[6] * anchor[2]) * ratio,
+                                    (anchor[1] + mark[7] * anchor[3]) * ratio),
+                        cv::Point2f((anchor[0] + mark[8] * anchor[2]) * ratio,
+                                    (anchor[1] + mark[9] * anchor[3]) * ratio)
                 };
                 result.push_back(headbox);
             }

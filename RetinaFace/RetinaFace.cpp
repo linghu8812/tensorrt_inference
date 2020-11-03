@@ -99,7 +99,7 @@ void RetinaFace::EngineInference(const std::vector<std::string> &image_list, con
         cv::Mat src_img = cv::imread(image_name);
         if (src_img.data)
         {
-            cv::cvtColor(src_img, src_img, cv::COLOR_BGR2RGB);
+//            cv::cvtColor(src_img, src_img, cv::COLOR_BGR2RGB);
             vec_Mat[batch_id] = src_img.clone();
             vec_name[batch_id] = image_name;
             batch_id++;
@@ -154,7 +154,7 @@ void RetinaFace::EngineInference(const std::vector<std::string> &image_list, con
                 if (!org_img.data)
                     continue;
                 auto rects = faces[i];
-                cv::cvtColor(org_img, org_img, cv::COLOR_BGR2RGB);
+//                cv::cvtColor(org_img, org_img, cv::COLOR_BGR2RGB);
                 for(const auto &rect : rects)
                 {
                     char name[256];
@@ -211,6 +211,7 @@ void RetinaFace::GenerateAnchors() {
 std::vector<float> RetinaFace::prepareImage(std::vector<cv::Mat> &vec_img) {
     std::vector<float> result(BATCH_SIZE * IMAGE_WIDTH * IMAGE_HEIGHT * INPUT_CHANNEL);
     float *data = result.data();
+    int index = 0;
     for (const cv::Mat &src_img : vec_img)
     {
         if (!src_img.data)
@@ -223,15 +224,14 @@ std::vector<float> RetinaFace::prepareImage(std::vector<cv::Mat> &vec_img) {
         flt_img.convertTo(flt_img, CV_32FC3);
 
         //HWC TO CHW
-        std::vector<cv::Mat> split_img(INPUT_CHANNEL);
-        cv::split(flt_img, split_img);
-
         int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
-        for (int i = 0; i < INPUT_CHANNEL; ++i)
-        {
-            memcpy(data, split_img[i].data, channelLength * sizeof(float));
-            data += channelLength;
-        }
+        std::vector<cv::Mat> split_img = {
+                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 2)),
+                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 1)),
+                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * index)
+        };
+        index += 3;
+        cv::split(flt_img, split_img);
     }
     return result;
 }

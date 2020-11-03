@@ -1,4 +1,4 @@
-seresnext:
+yolov5:
     onnx_file:     "../yolov5x.onnx"
     engine_file:   "../yolov5x.trt"
     labels_file:   "../coco.names"

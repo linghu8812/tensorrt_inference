@@ -1,0 +1,3 @@
+opencv-python
+mxnet >= 1.5.0
+onnx == 1.3.0

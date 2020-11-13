@@ -1,21 +1,23 @@
-# AlexNet MXNet Gluon=>ONNX=>TensorRT
+# ghostnet PyTorch=>ONNX=>TensorRT
 
 ## 1.Reference
-- **AlexNet:** [Imagenet classification with deep convolutional neural networks](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf)
+- **arxiv:** [GhostNet: More Features from Cheap Operations](https://arxiv.org/abs/1911.11907)
+- **github:** [https://github.com/huawei-noah/ghostnet](https://github.com/huawei-noah/ghostnet)
+- get ghostnet weights from here: [ghostnet/pytorch](https://github.com/huawei-noah/ghostnet/blob/master/pytorch/models/state_dict_93.98.pth)
 
 ## 2.Export ONNX Model
 ```
 python3 export_onnx.py
 ```
 
-## 3.Build alexnet_trt Project
+## 3.Build ghostnet_trt Project
 ```
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.run alexnet_trt
+## 4.run ghostnet_trt
 ```
-./alexnet_trt ../config.yaml ../samples
+./ghostnet_trt ../config.yaml ../samples
 ```

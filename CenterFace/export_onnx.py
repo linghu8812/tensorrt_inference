@@ -3,7 +3,7 @@ import math
 import argparse
 
 
-parser = argparse.ArgumentParser(description='Export RetinaFace ONNX')
+parser = argparse.ArgumentParser(description='Export CenterFace ONNX')
 parser.add_argument('--pretrained', help='pretrained centerface model', default='./centerface.onnx', type=str)
 parser.add_argument('--input_shape', nargs='+', default=[1, 3, 640, 640], type=int, help='input shape.')
 parser.add_argument('--onnx', help='onnx model', default='./centerface.onnx', type=str)

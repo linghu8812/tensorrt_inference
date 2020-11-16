@@ -12,6 +12,7 @@ models|framework|instruction
 [arcface](arcface)|MXNet Symbol|MXNet Symbol and face recognition example
 [CenterFace](CenterFace)|ONNX|rewrite ONNX model and face detection example
 [face_alignment](face_alignment)|MXNet Symbol|MXNet Symbol and face key points  detection example
+[FCN](FCN)|GluonCV|MXNet GluonCV semantic segmentation example
 [gender-age](gender-age)|MXNet Symbol|MXNet Symbol and face gender and age recognize example
 [ghostnet](ghostnet)|PyTorch|PyTorch example
 [RetinaFace](RetinaFace)|MXNet Symbol|MXNet Symbol and face detection example

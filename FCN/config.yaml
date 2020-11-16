@@ -1,0 +1,12 @@
+FCN:
+    onnx_file:     "../fcn_resnet101_voc.onnx"
+    engine_file:   "../fcn_resnet101_voc.trt"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   640
+    IMAGE_HEIGHT:  640
+    OUT_WIDTH:     480
+    OUT_HEIGHT:    480
+    CATEGORY:      20
+    img_mean:      [ 0.485, 0.456, 0.406 ]
+    img_std:       [ 0.229, 0.224, 0.225 ]

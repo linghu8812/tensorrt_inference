@@ -11,6 +11,7 @@ models|framework|instruction
 [alexnet](alexnet)|MXNet Gluon|MXNet Gluon example
 [arcface](arcface)|MXNet Symbol|MXNet Symbol and face recognition example
 [CenterFace](CenterFace)|ONNX|rewrite ONNX model and face detection example
+[efficientnet](efficientnet)|Keras|Keras to ONNX example
 [face_alignment](face_alignment)|MXNet Symbol|MXNet Symbol and face key points  detection example
 [FCN](FCN)|GluonCV|MXNet GluonCV semantic segmentation example
 [gender-age](gender-age)|MXNet Symbol|MXNet Symbol and face gender and age recognize example

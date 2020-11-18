@@ -33,7 +33,7 @@ private:
     std::string onnx_file;
     std::string engine_file;
     std::string labels_file;
-    std::map<int, std::string> coco_labels;
+    std::map<int, std::string> detect_labels;
     int BATCH_SIZE;
     int INPUT_CHANNEL;
     int IMAGE_WIDTH;
@@ -46,7 +46,8 @@ private:
     int refer_rows;
     int refer_cols;
     cv::Mat refer_matrix;
-    std::vector<int> stride;
+    std::vector<int> strides;
+    std::vector<int> num_anchors;
     std::vector<std::vector<int>> anchors;
     std::vector<std::vector<int>> grids;
     std::vector<cv::Scalar> class_colors;

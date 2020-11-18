@@ -75,7 +75,11 @@ class DarkNetParser(object):
         if remainder.replace(' ', '')[0] == '#':
             remainder = remainder.split('\n', 1)[1]
 
-        layer_param_block, remainder = remainder.split('\n\n', 1)
+        if '\n\n' in remainder:
+            layer_param_block, remainder = remainder.split('\n\n', 1)
+        else:
+            layer_param_block, remainder = remainder, ''
+
         layer_param_lines = layer_param_block.split('\n')[1:]
         layer_name = str(self.layer_counter).zfill(3) + '_' + layer_type
         layer_dict = dict(type=layer_type)
@@ -87,10 +91,7 @@ class DarkNetParser(object):
                 layer_dict[param_type] = param_value
         else:
             for param_line in layer_param_lines:
-                if 'class' in param_line:
-                    param_type, param_value = self._parse_params(param_line)
-                    layer_dict[param_type] = param_value
-                if 'num' in param_line:
+                if 'class' in param_line or 'num' in param_line or 'mask' in param_line:
                     param_type, param_value = self._parse_params(param_line)
                     layer_dict[param_type] = param_value
         self.layer_counter += 1
@@ -117,6 +118,8 @@ class DarkNetParser(object):
                 param_value_raw[1:].isdigit()
             if condition_param_value_positive or condition_param_value_negative:
                 param_value = int(param_value_raw)
+            elif ',' in param_value_raw:
+                param_value = param_value_raw.split(',')
             else:
                 param_value = float(param_value_raw)
         else:
@@ -245,6 +248,86 @@ class ReshapeParams(object):
         return param_name
 
 
+class StartParams(object):
+    # Helper class to store the scale parameter for an Resize node.
+
+    def __init__(self, node_name, value):
+        """Constructor based on the base node name (e.g. 86_Resize),
+        and the value of the scale input tensor.
+
+        Keyword arguments:
+        node_name -- base name of this YOLO Resize layer
+        value -- the value of the scale input to the Resize layer as numpy array
+        """
+        self.node_name = node_name
+        self.value = value
+
+    def generate_param_name(self):
+        """Generates the scale parameter name for the Resize node."""
+        param_name = self.node_name + '_' + "start"
+        return param_name
+
+
+class EndParams(object):
+    # Helper class to store the scale parameter for an Resize node.
+
+    def __init__(self, node_name, value):
+        """Constructor based on the base node name (e.g. 86_Resize),
+        and the value of the scale input tensor.
+
+        Keyword arguments:
+        node_name -- base name of this YOLO Resize layer
+        value -- the value of the scale input to the Resize layer as numpy array
+        """
+        self.node_name = node_name
+        self.value = value
+
+    def generate_param_name(self):
+        """Generates the scale parameter name for the Resize node."""
+        param_name = self.node_name + '_' + "end"
+        return param_name
+
+
+class AxesParams(object):
+    # Helper class to store the scale parameter for an Resize node.
+
+    def __init__(self, node_name, value):
+        """Constructor based on the base node name (e.g. 86_Resize),
+        and the value of the scale input tensor.
+
+        Keyword arguments:
+        node_name -- base name of this YOLO Resize layer
+        value -- the value of the scale input to the Resize layer as numpy array
+        """
+        self.node_name = node_name
+        self.value = value
+
+    def generate_param_name(self):
+        """Generates the scale parameter name for the Resize node."""
+        param_name = self.node_name + '_' + "axes"
+        return param_name
+
+
+class StepParams(object):
+    # Helper class to store the scale parameter for an Resize node.
+
+    def __init__(self, node_name, value):
+        """Constructor based on the base node name (e.g. 86_Resize),
+        and the value of the scale input tensor.
+
+        Keyword arguments:
+        node_name -- base name of this YOLO Resize layer
+        value -- the value of the scale input to the Resize layer as numpy array
+        """
+        self.node_name = node_name
+        self.value = value
+
+    def generate_param_name(self):
+        """Generates the scale parameter name for the Resize node."""
+        param_name = self.node_name + '_' + "step"
+        return param_name
+
+
 class WeightLoader(object):
     """Helper class used for loading the serialized weights of a binary file stream
     and returning the initializers and the input tensors required for populating
@@ -298,6 +381,21 @@ class WeightLoader(object):
             name, TensorProto.INT64, shape)
         initializer.append(scale_init)
         inputs.append(scale_input)
+        return initializer, inputs
+
+    def load_slice_params(self, slice_params):
+        initializer = list()
+        inputs = list()
+        for params in slice_params:
+            name = params.generate_param_name()
+            shape = params.value.shape
+            data = params.value
+            data_init = helper.make_tensor(
+                name, TensorProto.INT64, shape, data)
+            data_input = helper.make_tensor_value_info(
+                name, TensorProto.INT64, shape)
+            initializer.append(data_init)
+            inputs.append(data_input)
         return initializer, inputs
 
     def load_conv_weights(self, conv_params):
@@ -421,6 +519,7 @@ class GraphBuilderONNX(object):
             self,
             layer_configs,
             weights_file_path,
+            neck,
             verbose=True):
         """Iterate over all layer configs (parsed from the DarkNet representation
         of YOLOv3-608), create an ONNX graph, populate it with weights from the weights
@@ -447,8 +546,11 @@ class GraphBuilderONNX(object):
             output_dims = [self.batch_size, ] + \
                 self.output_tensors[tensor_name]
             layer_name, layer_dict = tensor_name, {'output_dims': output_dims}
-            transpose_name = self._make_transpose_node(layer_name, layer_dict)
+            transpose_name = self._make_transpose_node(layer_name, layer_dict, len(self.output_tensors))
             transposes.append(transpose_name)
+
+        if neck == 'FPN':
+            transposes = transposes[::-1]
 
         output_name = 'ouputs'
         route_node = helper.make_node(
@@ -482,6 +584,10 @@ class GraphBuilderONNX(object):
                 inputs.extend(inputs_layer)
             elif 'reshape' in layer_type:
                 initializer_layer, inputs_layer = weight_loader.load_reshape_scales(params)
+                initializer.extend(initializer_layer)
+                inputs.extend(inputs_layer)
+            elif 'slice' in layer_type:
+                initializer_layer, inputs_layer = weight_loader.load_slice_params(params)
                 initializer.extend(initializer_layer)
                 inputs.extend(inputs_layer)
         del weight_loader
@@ -758,6 +864,40 @@ class GraphBuilderONNX(object):
                 self.major_node_specs = self.major_node_specs[:split_index]
                 layer_name = None
                 channels = None
+            elif 'groups' in layer_dict:
+                assert layer_dict['groups'] == 2
+                assert layer_dict['group_id'] == 1
+                inputs = [input_node_specs.name]
+                slice_name = layer_name + '_slice'
+                channels = input_node_specs.channels
+                start = np.array([channels // 2]).astype(np.int64)
+                start_params = StartParams(layer_name, start)
+                self.param_dict[slice_name] = [start_params]
+                param_name = start_params.generate_param_name()
+                inputs.append(param_name)
+                end = np.array([channels]).astype(np.int64)
+                end_params = EndParams(layer_name, end)
+                self.param_dict[slice_name].append(end_params)
+                param_name = end_params.generate_param_name()
+                inputs.append(param_name)
+                axes = np.array([1]).astype(np.int64)
+                axes_params = AxesParams(layer_name, axes)
+                self.param_dict[slice_name].append(axes_params)
+                param_name = axes_params.generate_param_name()
+                inputs.append(param_name)
+                steps = np.array([1]).astype(np.int64)
+                step_params = StepParams(layer_name, steps)
+                self.param_dict[slice_name].append(step_params)
+                param_name = step_params.generate_param_name()
+                inputs.append(param_name)
+                slice_node = helper.make_node(
+                    'Slice',
+                    inputs=inputs,
+                    outputs=[layer_name],
+                    name=layer_name,
+                )
+                channels = channels // 2
+                self._nodes.append(slice_node)
             else:
                 inputs = [input_node_specs.name]
                 route_node = helper.make_node(
@@ -846,10 +986,10 @@ class GraphBuilderONNX(object):
         self._nodes.append(maxpool_node)
         return layer_name, channels
 
-    def _make_transpose_node(self, layer_name, layer_dict):
+    def _make_transpose_node(self, layer_name, layer_dict, output_len):
         inputs = [layer_name]
         reshape_name = layer_name + '_reshape_1'
-        shape = np.array([layer_dict['output_dims'][0], self.num // 3, self.classes + 5,
+        shape = np.array([layer_dict['output_dims'][0], self.num // output_len, self.classes + 5,
                           layer_dict['output_dims'][-2], layer_dict['output_dims'][-1]]).astype(np.int64)
         reshape_params = ReshapeParams(layer_name, shape)
         self.param_dict[reshape_name] = reshape_params
@@ -886,7 +1026,7 @@ class GraphBuilderONNX(object):
         return output_name
 
 
-def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolov3.onnx', neck='FPN'):
+def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolov3.onnx', strides=None, neck='PAN'):
     cfg_file_path = cfg_file
 
     supported_layers = ['net', 'convolutional', 'shortcut',
@@ -899,28 +1039,23 @@ def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolo
     width = layer_configs['000_net']['width']
     height = layer_configs['000_net']['height']
 
-    conv_layers = []
+    conv_layers, num_anchors = [], []
     for layer_key in layer_configs.keys():
         if 'conv' in layer_key:
             conv_layer = layer_key
         if 'yolo' in layer_key:
             yolo_layer = layer_key
+            num_anchors.append(len(layer_configs[yolo_layer]['mask']))
             conv_layers.append(conv_layer)
 
     classes = layer_configs[yolo_layer]['classes']
 
-    if neck == 'FPN':
-        stride = [32, 16, 8]
-    elif neck == 'PAN':
-        stride = [8, 16, 32]
-    else:
-        print('Neck must be FPN or PAN!')
+    if not strides:
         return
 
     output_tensor_dims = OrderedDict()
-    output_tensor_dims[conv_layers[0]] = [(classes + 5) * 3, width // stride[0], height // stride[0]]
-    output_tensor_dims[conv_layers[1]] = [(classes + 5) * 3, width // stride[1], height // stride[1]]
-    output_tensor_dims[conv_layers[2]] = [(classes + 5) * 3, width // stride[2], height // stride[2]]
+    for conv_layer, stride, num_anchor in zip(conv_layers, strides, num_anchors):
+        output_tensor_dims[conv_layer] = [(classes + 5) * num_anchor, width // stride, height // stride]
 
     # Create a GraphBuilderONNX object with the known output tensor dimensions:
     builder = GraphBuilderONNX(output_tensor_dims)
@@ -929,19 +1064,20 @@ def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolo
 
     # Now generate an ONNX graph with weights from the previously parsed layer configurations
     # and the weights file:
-    yolov3_model_def = builder.build_onnx_graph(
+    yolo_model_def = builder.build_onnx_graph(
         layer_configs=layer_configs,
         weights_file_path=weights_file_path,
+        neck=neck,
         verbose=True)
     # Once we have the model definition, we do not need the builder anymore:
     del builder
 
     # Perform a sanity check on the ONNX model definition:
-    onnx.checker.check_model(yolov3_model_def)
+    onnx.checker.check_model(yolo_model_def)
 
     # Serialize the generated ONNX graph to this file:
     output_file_path = output_file
-    onnx.save(yolov3_model_def, output_file_path)
+    onnx.save(yolo_model_def, output_file_path)
     print('Save ONNX File {} success!'.format(output_file_path))
 
 
@@ -950,6 +1086,8 @@ if __name__ == '__main__':
     parser.add_argument('--cfg_file', type=str, default='yolov4.cfg', help='yolo cfg file')
     parser.add_argument('--weights_file', type=str, default='yolov4.weights', help='yolo weights file')
     parser.add_argument('--output_file', type=str, default='yolov4.onnx', help='yolo onnx file')
+    parser.add_argument('--strides', nargs='+', type=int, default=[8, 16, 32], help='YOLO model cell size')
     parser.add_argument('--neck', type=str, default='PAN', help='use which kind neck')
     args = parser.parse_args()
-    main(cfg_file=args.cfg_file, weights_file=args.weights_file, output_file=args.output_file, neck=args.neck)
+    main(cfg_file=args.cfg_file, weights_file=args.weights_file, output_file=args.output_file, strides=args.strides,
+         neck=args.neck)

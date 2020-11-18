@@ -23,15 +23,9 @@ cmake ..
 make -j
 ```
 
-## 4.run yolov5_trt
+## 4.Run yolov5_trt
 ```
 ./yolov5_trt ../config.yaml ../samples
 ```
-predict results:
+## 5.Results:
 ![](prediction.jpg)
-
-## 5.Inference Time Benchmark
-model|resolution|PyTorch|TensorRT|
----|---|---|---
-yolov5s|640x640| |2.5ms
-yolov5x|640x640| |11.3ms

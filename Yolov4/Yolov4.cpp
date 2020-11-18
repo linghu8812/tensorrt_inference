@@ -14,15 +14,17 @@ YOLOv4::YOLOv4(const std::string &config_file) {
     IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
     obj_threshold = config["obj_threshold"].as<float>();
     nms_threshold = config["nms_threshold"].as<float>();
-    stride = config["stride"].as<std::vector<int>>();
+    strides = config["strides"].as<std::vector<int>>();
+    num_anchors = config["num_anchors"].as<std::vector<int>>();
+    assert(strides.size() == num_anchors.size());
     anchors = config["anchors"].as<std::vector<std::vector<int>>>();
-    coco_labels = readCOCOLabel(labels_file);
-    CATEGORY = coco_labels.size();
-    grids = {
-            {3, int(IMAGE_WIDTH / stride[0]), int(IMAGE_HEIGHT / stride[0])},
-            {3, int(IMAGE_WIDTH / stride[1]), int(IMAGE_HEIGHT / stride[1])},
-            {3, int(IMAGE_WIDTH / stride[2]), int(IMAGE_HEIGHT / stride[2])},
-    };
+    detect_labels = readCOCOLabel(labels_file);
+    CATEGORY = detect_labels.size();
+    int index = 0;
+    for (const int &stride : strides)
+    {
+        grids.push_back({num_anchors[index], int(IMAGE_WIDTH / stride), int(IMAGE_HEIGHT / stride)});
+    }
     refer_rows = 0;
     refer_cols = 6;
     for (const std::vector<int> &grid : grids) {
@@ -159,7 +161,7 @@ void YOLOv4::EngineInference(const std::vector<std::string> &image_list, const i
                 {
                     char t[256];
                     sprintf(t, "%.2f", rect.prob);
-                    std::string name = coco_labels[rect.classes] + "-" + t;
+                    std::string name = detect_labels[rect.classes] + "-" + t;
                     cv::putText(org_img, name, cv::Point(rect.x - rect.w / 2, rect.y - rect.h / 2 - 5), cv::FONT_HERSHEY_COMPLEX, 0.7, class_colors[rect.classes], 2);
                     cv::Rect rst(rect.x - rect.w / 2, rect.y - rect.h / 2, rect.w, rect.h);
                     cv::rectangle(org_img, rst, class_colors[rect.classes], 2, cv::LINE_8, 0);

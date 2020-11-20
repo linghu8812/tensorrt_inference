@@ -43,6 +43,7 @@ private:
     nvinfer1::IExecutionContext *context = nullptr;
     float obj_threshold;
     float nms_threshold;
+    bool new_coords;
     int refer_rows;
     int refer_cols;
     cv::Mat refer_matrix;

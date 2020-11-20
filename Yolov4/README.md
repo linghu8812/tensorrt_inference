@@ -7,8 +7,9 @@
 ## 2. darknet model zoo
 model|weights
 ---|---
- yolov4|[weights](https://drive.google.com/open?id=1sWNozS0emz7bmQTUWDLvsubLGnCwUiIS)
+yolov4|[weights](https://drive.google.com/open?id=1sWNozS0emz7bmQTUWDLvsubLGnCwUiIS)
 yolov4-tiny|[weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights)
+yolov4x-mish|[weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4x-mish.weights)
 yolov3|[weights](https://pjreddie.com/media/files/yolov3.weights)
 yolov3-spp|[weights](https://pjreddie.com/media/files/yolov3-spp.weights)
 yolov3-tiny|[weights](https://pjreddie.com/media/files/yolov3-tiny.weights)
@@ -23,6 +24,10 @@ python3 export_onnx.py
 - export yolov4-tiny onnx
 ```
 python3 export_onnx.py --cfg_file cfg/yolov4-tiny.cfg --weights_file yolov4-tiny.weights --output_file yolov4-tiny.onnx --strides 32 16 --neck FPN
+```
+- export yolov4x-mish onnx
+```
+python3 export_onnx.py --cfg_file cfg/yolov4x-mish.cfg --weights_file yolov4x-mish.weights --output_file yolov4x-mish.onnx --sigmoid
 ```
 - export yolov3, yolov3-spp onnx
 ```
@@ -50,6 +55,12 @@ make -j
 ```
 ./Yolov4_trt ../config-tiny.yaml ../samples
 ```
+- inference with yolov4x-mish
+```
+./Yolov4_trt ../config-xmish.yaml ../samples
+```
 
 ## 6.Results
 ![](prediction.jpg)
+
+For more information, please see this blog: [https://blog.csdn.net/linghu8812/article/details/109270320](https://blog.csdn.net/linghu8812/article/details/109270320)

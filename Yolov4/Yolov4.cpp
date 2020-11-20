@@ -14,6 +14,7 @@ YOLOv4::YOLOv4(const std::string &config_file) {
     IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
     obj_threshold = config["obj_threshold"].as<float>();
     nms_threshold = config["nms_threshold"].as<float>();
+    new_coords = config["new_coords"].as<bool>();
     strides = config["strides"].as<std::vector<int>>();
     num_anchors = config["num_anchors"].as<std::vector<int>>();
     assert(strides.size() == num_anchors.size());
@@ -236,19 +237,19 @@ std::vector<std::vector<YOLOv4::DetectRes>> YOLOv4::postProcess(const std::vecto
         std::vector<DetectRes> result;
         float *out = output + index * outSize;
         cv::Mat result_matrix = cv::Mat(refer_rows, CATEGORY + 5, CV_32FC1, out);
-        for (int index = 0; index < refer_rows; index++) {
+        for (int row_num = 0; row_num < refer_rows; row_num++) {
             DetectRes box;
-            float *row = result_matrix.ptr<float>(index);
+            auto *row = result_matrix.ptr<float>(row_num);
             auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
-            box.prob = sigmoid(row[4]) * sigmoid(row[max_pos - row]);
+            box.prob = new_coords ? row[4] * row[max_pos - row] : sigmoid(row[4]) * sigmoid(row[max_pos - row]);
             if (box.prob < obj_threshold)
                 continue;
             box.classes = max_pos - row - 5;
-            float *anchor = refer_matrix.ptr<float>(index);
-            box.x = (sigmoid(row[0]) + anchor[0]) / anchor[1] * src_img.cols;
-            box.y = (sigmoid(row[1]) + anchor[2]) / anchor[3] * src_img.rows;
-            box.w = exp(row[2]) * anchor[4] / IMAGE_WIDTH * src_img.cols;
-            box.h = exp(row[3]) * anchor[5] / IMAGE_HEIGHT * src_img.rows;
+            auto *anchor = refer_matrix.ptr<float>(row_num);
+            box.x = (new_coords ? (float)(row[0] * 2 - 0.5 + anchor[0]) / anchor[1] : (sigmoid(row[0]) + anchor[0]) / anchor[1]) * (float)src_img.cols;
+            box.y = (new_coords ? (float)(row[1] * 2 - 0.5 + anchor[2]) / anchor[3]: (sigmoid(row[1]) + anchor[2]) / anchor[3]) * (float)src_img.rows;
+            box.w = (new_coords ? (float)pow(row[2] * 2, 2) : exp(row[2])) * anchor[4] / (float)IMAGE_WIDTH * (float)src_img.cols;
+            box.h = (new_coords ? (float)pow(row[3] * 2, 2) : exp(row[3])) * anchor[5] / (float)IMAGE_HEIGHT * (float)src_img.rows;
             result.push_back(box);
         }
         NmsDetect(result);

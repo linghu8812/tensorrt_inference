@@ -520,6 +520,7 @@ class GraphBuilderONNX(object):
             layer_configs,
             weights_file_path,
             neck,
+            sigmoid=False,
             verbose=True):
         """Iterate over all layer configs (parsed from the DarkNet representation
         of YOLOv3-608), create an ONNX graph, populate it with weights from the weights
@@ -552,7 +553,7 @@ class GraphBuilderONNX(object):
         if neck == 'FPN':
             transposes = transposes[::-1]
 
-        output_name = 'ouputs'
+        output_name = 'sigmoid' if sigmoid else'ouputs'
         route_node = helper.make_node(
             'Concat',
             axis=1,
@@ -561,6 +562,17 @@ class GraphBuilderONNX(object):
             name=output_name,
         )
         self._nodes.append(route_node)
+
+        if sigmoid:
+            sigmoid_name, output_name = output_name, 'ouputs'
+            sigmoid_node = helper.make_node(
+                'Sigmoid',
+                inputs=[sigmoid_name],
+                outputs=[output_name],
+                name=output_name,
+            )
+            self._nodes.append(sigmoid_node)
+
         output_dims = (self.batch_size, int(total_grids), self.classes + 5)
         outputs = [helper.make_tensor_value_info(
             output_name, TensorProto.FLOAT, output_dims)]
@@ -1026,7 +1038,8 @@ class GraphBuilderONNX(object):
         return output_name
 
 
-def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolov3.onnx', strides=None, neck='PAN'):
+def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolov3.onnx', strides=None, neck='PAN',
+         sigmoid=False):
     cfg_file_path = cfg_file
 
     supported_layers = ['net', 'convolutional', 'shortcut',
@@ -1068,6 +1081,7 @@ def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolo
         layer_configs=layer_configs,
         weights_file_path=weights_file_path,
         neck=neck,
+        sigmoid=sigmoid,
         verbose=True)
     # Once we have the model definition, we do not need the builder anymore:
     del builder
@@ -1083,11 +1097,12 @@ def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolo
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transform YOLO weights to ONNX.')
-    parser.add_argument('--cfg_file', type=str, default='yolov4.cfg', help='yolo cfg file')
+    parser.add_argument('--cfg_file', type=str, default='cfg/yolov4.cfg', help='yolo cfg file')
     parser.add_argument('--weights_file', type=str, default='yolov4.weights', help='yolo weights file')
     parser.add_argument('--output_file', type=str, default='yolov4.onnx', help='yolo onnx file')
     parser.add_argument('--strides', nargs='+', type=int, default=[8, 16, 32], help='YOLO model cell size')
     parser.add_argument('--neck', type=str, default='PAN', help='use which kind neck')
+    parser.add_argument('--sigmoid', action='store_true', help='sigmoid yolo output layer')
     args = parser.parse_args()
     main(cfg_file=args.cfg_file, weights_file=args.weights_file, output_file=args.output_file, strides=args.strides,
-         neck=args.neck)
+         neck=args.neck, sigmoid=args.sigmoid)

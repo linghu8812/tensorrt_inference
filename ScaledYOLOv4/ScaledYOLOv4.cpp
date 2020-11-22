@@ -1,10 +1,10 @@
-#include "Yolov4.h"
+#include "ScaledYOLOv4.h"
 #include "yaml-cpp/yaml.h"
 #include "common.hpp"
 
-YOLOv4::YOLOv4(const std::string &config_file) {
+ScaledYOLOv4::ScaledYOLOv4(const std::string &config_file) {
     YAML::Node root = YAML::LoadFile(config_file);
-    YAML::Node config = root["Yolov4"];
+    YAML::Node config = root["ScaledYOLOv4"];
     onnx_file = config["onnx_file"].as<std::string>();
     engine_file = config["engine_file"].as<std::string>();
     labels_file = config["labels_file"].as<std::string>();
@@ -14,8 +14,6 @@ YOLOv4::YOLOv4(const std::string &config_file) {
     IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
     obj_threshold = config["obj_threshold"].as<float>();
     nms_threshold = config["nms_threshold"].as<float>();
-    new_coords = config["new_coords"].as<bool>();
-    letter_box = config["letter_box"].as<bool>();
     strides = config["strides"].as<std::vector<int>>();
     num_anchors = config["num_anchors"].as<std::vector<int>>();
     assert(strides.size() == num_anchors.size());
@@ -39,9 +37,9 @@ YOLOv4::YOLOv4(const std::string &config_file) {
         class_color = cv::Scalar(rand() % 255, rand() % 255, rand() % 255);
 }
 
-YOLOv4::~YOLOv4() = default;
+ScaledYOLOv4::~ScaledYOLOv4() = default;
 
-void YOLOv4::LoadEngine() {
+void ScaledYOLOv4::LoadEngine() {
     // create and load engine
     std::fstream existEngine;
     existEngine.open(engine_file, std::ios::in);
@@ -54,7 +52,7 @@ void YOLOv4::LoadEngine() {
     }
 }
 
-bool YOLOv4::InferenceFolder(const std::string &folder_name) {
+bool ScaledYOLOv4::InferenceFolder(const std::string &folder_name) {
     std::vector<std::string> sample_images = readFolder(folder_name);
     //get context
     assert(engine != nullptr);
@@ -95,7 +93,7 @@ bool YOLOv4::InferenceFolder(const std::string &folder_name) {
     engine->destroy();
 }
 
-void YOLOv4::EngineInference(const std::vector<std::string> &image_list, const int &outSize, void **buffers,
+void ScaledYOLOv4::EngineInference(const std::vector<std::string> &image_list, const int &outSize, void **buffers,
                              const std::vector<int64_t> &bufferSize, cudaStream_t stream) {
     int index = 0;
     int batch_id = 0;
@@ -180,7 +178,7 @@ void YOLOv4::EngineInference(const std::vector<std::string> &image_list, const i
     std::cout << "Average processing time is " << total_time / image_list.size() << "ms" << std::endl;
 }
 
-void YOLOv4::GenerateReferMatrix() {
+void ScaledYOLOv4::GenerateReferMatrix() {
     refer_matrix = cv::Mat(refer_rows, refer_cols, CV_32FC1);
     int position = 0;
     for (int n = 0; n < (int)grids.size(); n++)
@@ -204,7 +202,7 @@ void YOLOv4::GenerateReferMatrix() {
     }
 }
 
-std::vector<float> YOLOv4::prepareImage(std::vector<cv::Mat> &vec_img) {
+std::vector<float> ScaledYOLOv4::prepareImage(std::vector<cv::Mat> &vec_img) {
     std::vector<float> result(BATCH_SIZE * IMAGE_WIDTH * IMAGE_HEIGHT * INPUT_CHANNEL);
     float *data = result.data();
     int index = 0;
@@ -212,18 +210,12 @@ std::vector<float> YOLOv4::prepareImage(std::vector<cv::Mat> &vec_img) {
     {
         if (!src_img.data)
             continue;
-        cv::Mat flt_img;
-        if (letter_box) {
-            float ratio = std::min(float(IMAGE_WIDTH) / float(src_img.cols), float(IMAGE_HEIGHT) / float(src_img.rows));
-            flt_img = cv::Mat::zeros(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_8UC3);
-            cv::Mat rsz_img;
-            cv::resize(src_img, rsz_img, cv::Size(), ratio, ratio);
-            rsz_img.copyTo(flt_img(cv::Rect(0, 0, rsz_img.cols, rsz_img.rows)));
-            flt_img.convertTo(flt_img, CV_32FC3, 1.0 / 255);
-        } else {
-            cv::resize(src_img, flt_img, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
-            flt_img.convertTo(flt_img, CV_32FC3, 1.0 / 255);
-        }
+        float ratio = float(IMAGE_WIDTH) / float(src_img.cols) < float(IMAGE_HEIGHT) / float(src_img.rows) ? float(IMAGE_WIDTH) / float(src_img.cols) : float(IMAGE_HEIGHT) / float(src_img.rows);
+        cv::Mat flt_img = cv::Mat::zeros(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_8UC3);
+        cv::Mat rsz_img;
+        cv::resize(src_img, rsz_img, cv::Size(), ratio, ratio);
+        rsz_img.copyTo(flt_img(cv::Rect(0, 0, rsz_img.cols, rsz_img.rows)));
+        flt_img.convertTo(flt_img, CV_32FC3, 1.0 / 255);
 
         //HWC TO CHW
         int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
@@ -238,29 +230,29 @@ std::vector<float> YOLOv4::prepareImage(std::vector<cv::Mat> &vec_img) {
     return result;
 }
 
-std::vector<std::vector<YOLOv4::DetectRes>> YOLOv4::postProcess(const std::vector<cv::Mat> &vec_Mat, float *output,
+std::vector<std::vector<ScaledYOLOv4::DetectRes>> ScaledYOLOv4::postProcess(const std::vector<cv::Mat> &vec_Mat, float *output,
                                                                 const int &outSize) {
     std::vector<std::vector<DetectRes>> vec_result;
     int index = 0;
     for (const cv::Mat &src_img : vec_Mat)
     {
         std::vector<DetectRes> result;
+        float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
         float *out = output + index * outSize;
-        float ratio = std::max(float(src_img.cols) / float(IMAGE_WIDTH), float(src_img.rows) / float(IMAGE_HEIGHT));
         cv::Mat result_matrix = cv::Mat(refer_rows, CATEGORY + 5, CV_32FC1, out);
         for (int row_num = 0; row_num < refer_rows; row_num++) {
             DetectRes box;
             auto *row = result_matrix.ptr<float>(row_num);
             auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
-            box.prob = new_coords ? row[4] * row[max_pos - row] : sigmoid(row[4]) * sigmoid(row[max_pos - row]);
+            box.prob = row[4] * row[max_pos - row];
             if (box.prob < obj_threshold)
                 continue;
             box.classes = max_pos - row - 5;
             auto *anchor = refer_matrix.ptr<float>(row_num);
-            box.x = letter_box ? (float)(row[0] * 2 - 0.5 + anchor[0]) / anchor[1] * (float)IMAGE_WIDTH * ratio : (sigmoid(row[0]) + anchor[0]) / anchor[1] * (float)src_img.cols;
-            box.y = letter_box ? (float)(row[1] * 2 - 0.5 + anchor[2]) / anchor[3] * (float)IMAGE_HEIGHT * ratio : (sigmoid(row[1]) + anchor[2]) / anchor[3] * (float)src_img.rows;
-            box.w = letter_box ? (float)pow(row[2] * 2, 2) * anchor[4] * ratio : exp(row[2]) * anchor[4] / (float)IMAGE_WIDTH * (float)src_img.cols;
-            box.h = letter_box ? (float)pow(row[3] * 2, 2) * anchor[5] * ratio : exp(row[3]) * anchor[5] / (float)IMAGE_HEIGHT * (float)src_img.rows;
+            box.x = (row[0] * 2 - 0.5 + anchor[0]) / anchor[1] * IMAGE_WIDTH * ratio;
+            box.y = (row[1] * 2 - 0.5 + anchor[2]) / anchor[3] * IMAGE_HEIGHT * ratio;
+            box.w = pow(row[2] * 2, 2) * anchor[4] * ratio;
+            box.h = pow(row[3] * 2, 2) * anchor[5] * ratio;
             result.push_back(box);
         }
         NmsDetect(result);
@@ -270,7 +262,7 @@ std::vector<std::vector<YOLOv4::DetectRes>> YOLOv4::postProcess(const std::vecto
     return vec_result;
 }
 
-void YOLOv4::NmsDetect(std::vector<DetectRes> &detections) {
+void ScaledYOLOv4::NmsDetect(std::vector<DetectRes> &detections) {
     sort(detections.begin(), detections.end(), [=](const DetectRes &left, const DetectRes &right) {
         return left.prob > right.prob;
     });
@@ -290,7 +282,7 @@ void YOLOv4::NmsDetect(std::vector<DetectRes> &detections) {
     { return det.prob == 0; }), detections.end());
 }
 
-float YOLOv4::IOUCalculate(const YOLOv4::DetectRes &det_a, const YOLOv4::DetectRes &det_b) {
+float ScaledYOLOv4::IOUCalculate(const ScaledYOLOv4::DetectRes &det_a, const ScaledYOLOv4::DetectRes &det_b) {
     cv::Point2f center_a(det_a.x, det_a.y);
     cv::Point2f center_b(det_b.x, det_b.y);
     cv::Point2f left_up(std::min(det_a.x - det_a.w / 2, det_b.x - det_b.w / 2),
@@ -311,8 +303,4 @@ float YOLOv4::IOUCalculate(const YOLOv4::DetectRes &det_a, const YOLOv4::DetectR
         return 0;
     else
         return inter_area / union_area - distance_d / distance_c;
-}
-
-float YOLOv4::sigmoid(float in){
-    return 1.f / (1.f + exp(-in));
 }

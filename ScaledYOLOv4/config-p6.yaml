@@ -1,0 +1,13 @@
+ScaledYOLOv4:
+    onnx_file:     "../yolov4-p6.onnx"
+    engine_file:   "../yolov4-p6.trt"
+    labels_file:   "../coco.names"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   1280
+    IMAGE_HEIGHT:  1280
+    obj_threshold: 0.4
+    nms_threshold: 0.45
+    strides:       [8, 16, 32, 64]
+    num_anchors:   [4,  4,  4,  4]
+    anchors:       [[ 13, 17], [ 31, 25], [ 24, 51], [ 61, 45], [ 61, 45], [ 48, 102], [ 119, 96], [ 97, 189], [ 97, 189], [ 217, 184], [ 171, 384], [ 324, 451], [ 324, 451], [ 545, 357], [ 616, 618], [1024,1024]]

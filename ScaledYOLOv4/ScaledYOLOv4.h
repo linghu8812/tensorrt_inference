@@ -4,7 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include "NvInfer.h"
 
-class YOLOv4
+class ScaledYOLOv4
 {
     struct DetectRes{
         int classes;
@@ -16,8 +16,8 @@ class YOLOv4
     };
 
 public:
-    YOLOv4(const std::string &config_file);
-    ~YOLOv4();
+    explicit ScaledYOLOv4(const std::string &config_file);
+    ~ScaledYOLOv4();
     void LoadEngine();
     bool InferenceFolder(const std::string &folder_name);
 
@@ -29,7 +29,7 @@ private:
     std::vector<std::vector<DetectRes>> postProcess(const std::vector<cv::Mat> &vec_Mat, float *output, const int &outSize);
     void NmsDetect(std::vector <DetectRes> &detections);
     float IOUCalculate(const DetectRes &det_a, const DetectRes &det_b);
-    static float sigmoid(float in);
+
     std::string onnx_file;
     std::string engine_file;
     std::string labels_file;
@@ -43,8 +43,6 @@ private:
     nvinfer1::IExecutionContext *context = nullptr;
     float obj_threshold;
     float nms_threshold;
-    bool new_coords;
-    bool letter_box;
     int refer_rows;
     int refer_cols;
     cv::Mat refer_matrix;

@@ -1,0 +1,2 @@
+onnx 
+pytorch >= 1.6.0

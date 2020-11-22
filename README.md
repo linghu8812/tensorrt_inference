@@ -17,6 +17,7 @@ models|framework|instruction
 [gender-age](gender-age)|MXNet Symbol|MXNet Symbol and face gender and age recognize example
 [ghostnet](ghostnet)|PyTorch|PyTorch example
 [RetinaFace](RetinaFace)|MXNet Symbol|MXNet Symbol and face detection example
+[ScaledYOLOv4](ScaledYOLOv4)|PyTorch|YOLOv4 large with PyTorch implementation
 [seresnext](seresnext)|PyTorch|PyTorch example
 [Yolov4](Yolov4)|darknet|darknet and object detection example
 [yolov5](yolov5)|PyTorch|PyTorch and object detection example

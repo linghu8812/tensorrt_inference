@@ -9,6 +9,7 @@ Yolov4:
     obj_threshold: 0.4
     nms_threshold: 0.45
     new_coords:    False
+    letter_box:    False
     strides:       [16, 32]
     num_anchors:   [ 3,  3]
     anchors:       [[ 23, 27], [ 37, 58], [ 81, 82], [ 81, 82], [135, 169], [ 344, 319]]

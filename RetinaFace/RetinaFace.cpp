@@ -13,14 +13,19 @@ RetinaFace::RetinaFace(const std::string &config_file) {
     IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
     obj_threshold = config["obj_threshold"].as<float>();
     nms_threshold = config["nms_threshold"].as<float>();
-    feature_sizes = config["feature_sizes"].as<std::vector<int>>();
+    detect_mask = config["detect_mask"].as<bool>();
+    mask_thresh = config["mask_thresh"].as<float>();
+    landmark_std = config["landmark_std"].as<float>();
     feature_steps = config["feature_steps"].as<std::vector<int>>();
-    feature_maps = config["feature_maps"].as<std::vector<int>>();
+    for (const int step:feature_steps) {
+        assert(step != 0);
+        int feature_map = IMAGE_HEIGHT / step;
+        feature_maps.push_back(feature_map);
+        int feature_size = feature_map * feature_map;
+        feature_sizes.push_back(feature_size);
+    }
     anchor_sizes = config["anchor_sizes"].as<std::vector<std::vector<int>>>();
-    int sum_of_feature = std::accumulate(feature_sizes.begin(), feature_sizes.end(), 0);
-    out1_step = sum_of_feature * anchor_num;
-    out2_step = sum_of_feature * anchor_num * bbox_head;
-    out3_step = sum_of_feature * anchor_num * landmark_head;
+    sum_of_feature = std::accumulate(feature_sizes.begin(), feature_sizes.end(), 0) * anchor_num;
     GenerateAnchors();
 }
 
@@ -47,8 +52,8 @@ bool RetinaFace::InferenceFolder(const std::string &folder_name) {
     assert(context != nullptr);
 
     //get buffers
-    assert(engine->getNbBindings() == 4);
-    void *buffers[4];
+    assert(engine->getNbBindings() == 2);
+    void *buffers[2];
     std::vector<int64_t> bufferSize;
     int nbBindings = engine->getNbBindings();
     bufferSize.resize(nbBindings);
@@ -66,11 +71,7 @@ bool RetinaFace::InferenceFolder(const std::string &folder_name) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
-    int outSize[] = {
-            int(bufferSize[1] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[2] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[3] / sizeof(float) / BATCH_SIZE)
-    };
+    int outSize = int(bufferSize[1] / sizeof(float) / BATCH_SIZE);
 
     EngineInference(sample_images, outSize, buffers, bufferSize, stream);
 
@@ -84,7 +85,7 @@ bool RetinaFace::InferenceFolder(const std::string &folder_name) {
     engine->destroy();
 }
 
-void RetinaFace::EngineInference(const std::vector<std::string> &image_list, const int *outSize, void **buffers,
+void RetinaFace::EngineInference(const std::vector<std::string> &image_list, const int &outSize, void **buffers,
                                  const std::vector<int64_t> &bufferSize, cudaStream_t stream) {
     int index = 0;
     int batch_id = 0;
@@ -134,17 +135,11 @@ void RetinaFace::EngineInference(const std::vector<std::string> &image_list, con
             std::cout << "device2host" << std::endl;
             std::cout << "post process" << std::endl;
             auto r_start = std::chrono::high_resolution_clock::now();
-            auto *out_1 = new float[outSize[0] * BATCH_SIZE];
-            auto *out_2 = new float[outSize[1] * BATCH_SIZE];
-            auto *out_3 = new float[outSize[2] * BATCH_SIZE];
-            cudaMemcpyAsync(out_1, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_2, buffers[2], bufferSize[2], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_3, buffers[3], bufferSize[3], cudaMemcpyDeviceToHost, stream);
+            auto *out = new float[outSize * BATCH_SIZE];
+            cudaMemcpyAsync(out, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
             cudaStreamSynchronize(stream);
-            auto faces = postProcess(vec_Mat, out_1, out_2, out_3, outSize[0], outSize[1], outSize[2]);
-            delete[] out_1;
-            delete[] out_2;
-            delete[] out_3;
+            auto faces = postProcess(vec_Mat, out, outSize);
+            delete[] out;
             auto r_end = std::chrono::high_resolution_clock::now();
             float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
             std::cout << "Post process take: " << total_res << " ms." << std::endl;
@@ -158,18 +153,26 @@ void RetinaFace::EngineInference(const std::vector<std::string> &image_list, con
                 for(const auto &rect : rects)
                 {
                     char name[256];
+                    cv::Scalar color;
                     sprintf(name, "%.2f", rect.confidence);
+                    if (rect.has_mask) {
+                        color = cv::Scalar(0, 0, 255);
+                        cv::putText(org_img, "mask", cv::Point(rect.face_box.x - rect.face_box.w / 2,rect.face_box.y - rect.face_box.h / 2 + 15),
+                                    cv::FONT_HERSHEY_COMPLEX, 0.7, color, 2);
+                    } else {
+                        color = cv::Scalar(255, 0, 0);
+                    }
                     cv::putText(org_img, name, cv::Point(rect.face_box.x - rect.face_box.w / 2,rect.face_box.y - rect.face_box.h / 2 - 5),
-                            cv::FONT_HERSHEY_COMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
+                            cv::FONT_HERSHEY_COMPLEX, 0.7, color, 2);
                     cv::Rect box(rect.face_box.x - rect.face_box.w / 2, rect.face_box.y - rect.face_box.h / 2, rect.face_box.w, rect.face_box.h);
-                    cv::rectangle(org_img, box, cv::Scalar(255, 0, 0), 2, cv::LINE_8, 0);
+                    cv::rectangle(org_img, box, color, 2, cv::LINE_8, 0);
                     for (int k = 0; k < rect.keypoints.size(); k++)
                     {
                         cv::Point2f key_point = rect.keypoints[k];
                         if (k % 3 == 0)
                             cv::circle(org_img, key_point, 3, cv::Scalar(0, 255, 0), -1);
                         else if (k % 3 == 1)
-                            cv::circle(org_img, key_point, 3, cv::Scalar(0, 0, 255), -1);
+                            cv::circle(org_img, key_point, 3, cv::Scalar(255, 0, 255), -1);
                         else
                             cv::circle(org_img, key_point, 3, cv::Scalar(0, 255, 255), -1);
                     }
@@ -190,15 +193,15 @@ void RetinaFace::GenerateAnchors() {
     float base_cx = 7.5;
     float base_cy = 7.5;
 
-    refer_matrix = cv::Mat(out1_step, bbox_head, CV_32FC1);
+    refer_matrix = cv::Mat(sum_of_feature, bbox_head, CV_32FC1);
     int line = 0;
     for(size_t feature_map = 0; feature_map < feature_maps.size(); feature_map++) {
         for (int height = 0; height < feature_maps[feature_map]; ++height) {
             for (int width = 0; width < feature_maps[feature_map]; ++width) {
                 for (int anchor = 0; anchor < anchor_sizes[feature_map].size(); ++anchor) {
-                    float *row = refer_matrix.ptr<float>(line);
-                    row[0] = base_cx + width * feature_steps[feature_map];
-                    row[1] = base_cy + height * feature_steps[feature_map];
+                    auto *row = refer_matrix.ptr<float>(line);
+                    row[0] = base_cx + (float)width * feature_steps[feature_map];
+                    row[1] = base_cy + (float)height * feature_steps[feature_map];
                     row[2] = anchor_sizes[feature_map][anchor];
                     row[3] = anchor_sizes[feature_map][anchor];
                     line++;
@@ -236,30 +239,28 @@ std::vector<float> RetinaFace::prepareImage(std::vector<cv::Mat> &vec_img) {
     return result;
 }
 
-std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std::vector<cv::Mat> &vec_Mat, float *output_1,
-        float *output_2, float *output_3, const int &outSize_1, const int &outSize_2, const int &outSize_3) {
+std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std::vector<cv::Mat> &vec_Mat,
+        float *output, const int &outSize) {
     std::vector<std::vector<FaceRes>> vec_result;
     int index = 0;
     for (const cv::Mat &src_img : vec_Mat)
     {
         std::vector<FaceRes> result;
-        float *out_1 = output_1 + index * outSize_1;
-        float *out_2 = output_2 + index * outSize_2;
-        float *out_3 = output_3 + index * outSize_3;
+        float *out = output + index * outSize;
         float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
 
-        cv::Mat score_matrix = cv::Mat(out1_step, 1, CV_32FC1, out_1);
-        cv::Mat bbox_matrix = cv::Mat(out2_step / bbox_head, bbox_head, CV_32FC1, out_2);
-        cv::Mat landmark_matrix = cv::Mat(out3_step / landmark_head, landmark_head, CV_32FC1, out_3);
+        int result_cols = (detect_mask ? 2 : 1) + bbox_head + landmark_head;
+        cv::Mat result_matrix = cv::Mat(sum_of_feature, result_cols, CV_32FC1, out);
 
-        for (int item = 0; item < score_matrix.rows; ++item) {
-            float score = score_matrix.ptr<float>(item)[0];
-            if(score > obj_threshold){
+        for (int item = 0; item < result_matrix.rows; ++item) {
+            auto *current_row = result_matrix.ptr<float>(item);
+            if(current_row[0] > obj_threshold){
                 FaceRes headbox;
-                headbox.confidence = score;
+                headbox.confidence = current_row[0];
                 auto *anchor = refer_matrix.ptr<float>(item);
-                auto *bbox = bbox_matrix.ptr<float>(item);
-                auto *mark = landmark_matrix.ptr<float>(item);
+                auto *bbox = current_row + 1;
+                auto *keyp = current_row + 1 + bbox_head;
+                auto *mask = current_row + 1 + bbox_head + landmark_head;
 
                 headbox.face_box.x = (anchor[0] + bbox[0] * anchor[2]) * ratio;
                 headbox.face_box.y = (anchor[1] + bbox[1] * anchor[3]) * ratio;
@@ -267,17 +268,20 @@ std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std:
                 headbox.face_box.h = anchor[3] * exp(bbox[3]) * ratio;
 
                 headbox.keypoints = {
-                        cv::Point2f((anchor[0] + mark[0] * anchor[2]) * ratio,
-                                    (anchor[1] + mark[1] * anchor[3]) * ratio),
-                        cv::Point2f((anchor[0] + mark[2] * anchor[2]) * ratio,
-                                    (anchor[1] + mark[3] * anchor[3]) * ratio),
-                        cv::Point2f((anchor[0] + mark[4] * anchor[2]) * ratio,
-                                    (anchor[1] + mark[5] * anchor[3]) * ratio),
-                        cv::Point2f((anchor[0] + mark[6] * anchor[2]) * ratio,
-                                    (anchor[1] + mark[7] * anchor[3]) * ratio),
-                        cv::Point2f((anchor[0] + mark[8] * anchor[2]) * ratio,
-                                    (anchor[1] + mark[9] * anchor[3]) * ratio)
+                        cv::Point2f((anchor[0] + keyp[0] * anchor[2] * landmark_std) * ratio,
+                                    (anchor[1] + keyp[1] * anchor[3] * landmark_std) * ratio),
+                        cv::Point2f((anchor[0] + keyp[2] * anchor[2] * landmark_std) * ratio,
+                                    (anchor[1] + keyp[3] * anchor[3] * landmark_std) * ratio),
+                        cv::Point2f((anchor[0] + keyp[4] * anchor[2] * landmark_std) * ratio,
+                                    (anchor[1] + keyp[5] * anchor[3] * landmark_std) * ratio),
+                        cv::Point2f((anchor[0] + keyp[6] * anchor[2] * landmark_std) * ratio,
+                                    (anchor[1] + keyp[7] * anchor[3] * landmark_std) * ratio),
+                        cv::Point2f((anchor[0] + keyp[8] * anchor[2] * landmark_std) * ratio,
+                                    (anchor[1] + keyp[9] * anchor[3] * landmark_std) * ratio)
                 };
+
+                if (detect_mask and mask[0] > mask_thresh)
+                    headbox.has_mask = true;
                 result.push_back(headbox);
             }
         }

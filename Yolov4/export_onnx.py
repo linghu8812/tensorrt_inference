@@ -931,6 +931,10 @@ class GraphBuilderONNX(object):
                     index += 1
                 route_node_specs = self._get_previous_node_specs(
                     target_index=index)
+                if index < -1 and int(layer_name.split('_')[0]) + index != int(route_node_specs.name.split('_')[0]):
+                    index = int(layer_name.split('_')[0]) + index
+                    route_node_specs = self._get_previous_node_specs(
+                        target_index=index)
                 inputs.append(route_node_specs.name)
                 channels += route_node_specs.channels
             assert inputs

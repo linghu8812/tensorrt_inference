@@ -6,12 +6,13 @@ import torch.nn as nn
 import models
 from models.experimental import attempt_load
 from utils.activations import Mish
+from onnxsim import simplify
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', type=str, default='./weights/yolov4-p5.pt', help='weights path')  # from yolov5/models/
-    parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='image size')  # height, width
+    parser.add_argument('--img-size', nargs='+', type=int, default=[896, 896], help='image size')  # height, width
     parser.add_argument('--batch-size', type=int, default=1, help='batch size')
     opt = parser.parse_args()
     opt.img_size *= 2 if len(opt.img_size) == 1 else 1  # expand
@@ -56,7 +57,9 @@ if __name__ == '__main__':
 
         # Checks
         onnx_model = onnx.load(f)  # load onnx model
-        onnx.checker.check_model(onnx_model)  # check onnx model
+        model_simp, check = simplify(onnx_model)
+        assert check, "Simplified ONNX model could not be validated"
+        onnx.save(model_simp, f)
         # print(onnx.helper.printable_graph(onnx_model.graph))  # print a human readable model
         print('ONNX export success, saved as %s' % f)
     except Exception as e:

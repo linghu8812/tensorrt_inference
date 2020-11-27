@@ -184,7 +184,6 @@ std::vector<std::vector<cv::Point2f>> FaceAlignment::postProcess(const std::vect
         float *out = output + index * outSize;
         cv::Mat result_matrix = cv::Mat(1, outSize, CV_32FC1, out);
         result_matrix = (result_matrix + 1) * src_img.cols / 2;
-        std::cout << result_matrix << std::endl;
         for (int start = 0; start < outSize; start += 2)
         {
             cv::Point2f point = cv::Point2f(out[start], out[start + 1]);

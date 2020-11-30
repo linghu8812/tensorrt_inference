@@ -94,6 +94,8 @@ class DarkNetParser(object):
                 if 'class' in param_line or 'num' in param_line or 'mask' in param_line:
                     param_type, param_value = self._parse_params(param_line)
                     layer_dict[param_type] = param_value
+        if len(layer_dict) == 1:
+            return None, None, remainder
         self.layer_counter += 1
         return layer_dict, layer_name, remainder
 

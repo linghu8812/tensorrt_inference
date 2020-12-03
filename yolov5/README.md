@@ -27,5 +27,8 @@ make -j
 ```
 ./yolov5_trt ../config.yaml ../samples
 ```
+
+For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/109322729](https://blog.csdn.net/linghu8812/article/details/109322729)
+
 ## 5.Results:
 ![](prediction.jpg)

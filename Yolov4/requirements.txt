@@ -1,2 +1,2 @@
-onnx == 1.5.0
+onnx
 numpy

@@ -614,8 +614,8 @@ class GraphBuilderONNX(object):
         )
         if verbose:
             print(helper.printable_graph(self.graph_def))
-        model_def = helper.make_model(self.graph_def,
-                                      producer_name='NVIDIA TensorRT sample')
+        model_def = helper.make_model(self.graph_def, opset_imports=[helper.make_opsetid("", 10)],
+                                      producer_name='darknet to ONNX example')
         return model_def
 
     def _make_onnx_node(self, layer_name, layer_dict):
@@ -1044,7 +1044,7 @@ class GraphBuilderONNX(object):
         return output_name
 
 
-def main(cfg_file='yolov3.cfg', weights_file='yolov3.weights', output_file='yolov3.onnx', strides=None, neck='PAN',
+def main(cfg_file='yolov4.cfg', weights_file='yolov4.weights', output_file='yolov4.onnx', strides=None, neck='PAN',
          sigmoid=False):
     cfg_file_path = cfg_file
 

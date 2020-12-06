@@ -1,0 +1,14 @@
+nanodet:
+  onnx_file:     "../nanodet-m.onnx"
+  engine_file:   "../nanodet-m.trt"
+  labels_file:   "../coco.names"
+  BATCH_SIZE:    1
+  INPUT_CHANNEL: 3
+  IMAGE_WIDTH:   320
+  IMAGE_HEIGHT:  320
+  img_mean:      [ 103.53, 116.28, 123.675 ]
+  img_std:       [ 57.375,  57.12,  58.395 ]
+  obj_threshold: 0.35
+  nms_threshold: 0.6
+  strides:       [8, 16, 32]
+  reg_max:       7

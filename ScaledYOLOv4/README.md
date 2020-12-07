@@ -9,7 +9,7 @@ model|weights
 ---|---
 yolov4-p5|[weights](https://drive.google.com/file/d/1aXZZE999sHMP1gev60XhNChtHPRMH3Fz/view?usp=sharing)
 yolov4-p6|[weights](https://drive.google.com/file/d/1aB7May8oPYzBqbgwYSZHuATPXyxh9xnf/view?usp=sharing)
-yolov4-p7|[weights](https://drive.google.com/file/d/1aB7May8oPYzBqbgwYSZHuATPXyxh9xnf/view?usp=sharing)
+yolov4-p7|[weights](https://drive.google.com/file/d/18fGlzgEJTkUEiBG4hW00pyedJKNnYLP3/view?usp=sharing)
 
 ## 3.Export ONNX Model
 ```

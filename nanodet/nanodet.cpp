@@ -18,16 +18,18 @@ nanodet::nanodet(const std::string &config_file) {
     obj_threshold = config["obj_threshold"].as<float>();
     nms_threshold = config["nms_threshold"].as<float>();
     strides = config["strides"].as<std::vector<int>>();
-    reg_max = config["reg_max"].as<int>() + 1;
     detect_labels = readCOCOLabel(labels_file);
     CATEGORY = detect_labels.size();
     class_colors.resize(CATEGORY);
+    refer_rows = 0;
+    refer_cols = 3;
+    for (const int &stride : strides) {
+        refer_rows += IMAGE_WIDTH * IMAGE_HEIGHT / stride / stride;
+    }
     GenerateReferMatrix();
     srand((int) time(nullptr));
     for (cv::Scalar &class_color : class_colors)
         class_color = cv::Scalar(rand() % 255, rand() % 255, rand() % 255);
-    float project[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    cv::Mat project_mat = cv::Mat(reg_max, 1, CV_32FC1, project);
 }
 
 nanodet::~nanodet() = default;
@@ -53,8 +55,8 @@ bool nanodet::InferenceFolder(const std::string &folder_name) {
     assert(context != nullptr);
 
     //get buffers
-    assert(engine->getNbBindings() == 7);
-    void *buffers[7];
+    assert(engine->getNbBindings() == 2);
+    void *buffers[2];
     std::vector<int64_t> bufferSize;
     int nbBindings = engine->getNbBindings();
     bufferSize.resize(nbBindings);
@@ -72,14 +74,7 @@ bool nanodet::InferenceFolder(const std::string &folder_name) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
-    int outSize[] = {
-            int(bufferSize[1] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[2] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[3] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[4] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[5] / sizeof(float) / BATCH_SIZE),
-            int(bufferSize[6] / sizeof(float) / BATCH_SIZE)
-    };
+    int outSize = int(bufferSize[1] / sizeof(float) / BATCH_SIZE);
 
     EngineInference(sample_images, outSize, buffers, bufferSize, stream);
 
@@ -87,18 +82,13 @@ bool nanodet::InferenceFolder(const std::string &folder_name) {
     cudaStreamDestroy(stream);
     cudaFree(buffers[0]);
     cudaFree(buffers[1]);
-    cudaFree(buffers[2]);
-    cudaFree(buffers[3]);
-    cudaFree(buffers[4]);
-    cudaFree(buffers[5]);
-    cudaFree(buffers[6]);
 
     // destroy the engine
     context->destroy();
     engine->destroy();
 }
 
-void nanodet::EngineInference(const std::vector<std::string> &image_list, const int *outSize, void **buffers,
+void nanodet::EngineInference(const std::vector<std::string> &image_list, const int &outSize, void **buffers,
                                  const std::vector<int64_t> &bufferSize, cudaStream_t stream) {
     int index = 0;
     int batch_id = 0;
@@ -148,27 +138,11 @@ void nanodet::EngineInference(const std::vector<std::string> &image_list, const 
             std::cout << "device2host" << std::endl;
             std::cout << "post process" << std::endl;
             auto r_start = std::chrono::high_resolution_clock::now();
-            auto *out_1 = new float[outSize[0] * BATCH_SIZE];
-            auto *out_2 = new float[outSize[1] * BATCH_SIZE];
-            auto *out_3 = new float[outSize[2] * BATCH_SIZE];
-            auto *out_4 = new float[outSize[3] * BATCH_SIZE];
-            auto *out_5 = new float[outSize[4] * BATCH_SIZE];
-            auto *out_6 = new float[outSize[5] * BATCH_SIZE];
-            cudaMemcpyAsync(out_1, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_2, buffers[2], bufferSize[2], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_3, buffers[3], bufferSize[3], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_4, buffers[4], bufferSize[4], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_5, buffers[5], bufferSize[5], cudaMemcpyDeviceToHost, stream);
-            cudaMemcpyAsync(out_6, buffers[6], bufferSize[6], cudaMemcpyDeviceToHost, stream);
+            auto *out = new float[outSize * BATCH_SIZE];
+            cudaMemcpyAsync(out, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
             cudaStreamSynchronize(stream);
-            auto results = postProcess(vec_Mat, out_1, out_2, out_3, out_4, out_5, out_6,
-                    outSize[0], outSize[1], outSize[2], outSize[3], outSize[4], outSize[5]);
-            delete[] out_1;
-            delete[] out_2;
-            delete[] out_3;
-            delete[] out_4;
-            delete[] out_5;
-            delete[] out_6;
+            auto results = postProcess(vec_Mat, out, outSize);
+            delete[] out;
             auto r_end = std::chrono::high_resolution_clock::now();
             float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
             std::cout << "Post process take: " << total_res << " ms." << std::endl;
@@ -200,17 +174,17 @@ void nanodet::EngineInference(const std::vector<std::string> &image_list, const 
 }
 
 void nanodet::GenerateReferMatrix() {
-    anchor_mat.resize(strides.size());
     int index = 0;
+    refer_matrix = cv::Mat(refer_rows, refer_cols, CV_32FC1);
     for (const int &stride : strides) {
-        anchor_mat[index] = cv::Mat(IMAGE_WIDTH / stride * IMAGE_HEIGHT / stride, 2, CV_32FC1);
         for (int h = 0; h < IMAGE_HEIGHT / stride; h++)
             for (int w = 0; w < IMAGE_WIDTH / stride; w++) {
-                auto *row = anchor_mat[index].ptr<float>(h * IMAGE_WIDTH / stride + w);
+                auto *row = refer_matrix.ptr<float>(index);
                 row[0] = float((2 * w + 1) * stride - 1) / 2;
                 row[1] = float((2 * h + 1) * stride - 1) / 2;
+                row[2] = stride;
+                index += 1;
             }
-        index += 1;
     }
 }
 
@@ -245,54 +219,31 @@ std::vector<float> nanodet::prepareImage(std::vector<cv::Mat> &vec_img) {
     return result;
 }
 
-void nanodet::decode_boxes(float *out, float *box, std::vector<nanodet::DetectRes> &result, const float &ratio, const int &outSize,
-        const int &boxSize, const int &stride, const cv::Mat &anchor) {
-    int rows = outSize / CATEGORY;
-    cv::Mat score_mat = cv::Mat(rows, CATEGORY, CV_32FC1, out);
-    cv::Mat boxes_mat = cv::Mat(rows, boxSize / rows, CV_32FC1, box) * stride;
-    boxes_mat.col(0) = anchor.col(0) - boxes_mat.col(0);
-    boxes_mat.col(1) = anchor.col(1) - boxes_mat.col(1);
-    boxes_mat.col(2) = anchor.col(0) + boxes_mat.col(2);
-    boxes_mat.col(3) = anchor.col(1) + boxes_mat.col(3);
-    for (int row = 0; row < rows; row++) {
-        DetectRes box;
-        auto score = score_mat.ptr<float>(row);
-        auto max_pos = std::max_element(score, score + CATEGORY);
-        box.prob = score[max_pos - score];
-        if (box.prob < obj_threshold)
-            continue;
-        box.classes = max_pos - score;
-        auto rst = boxes_mat.ptr<float>(row);
-        box.x = (rst[0] + rst[2]) / 2 * ratio;
-        box.y = (rst[1] + rst[3]) / 2 * ratio;
-        box.w = (rst[2] - rst[0]) * ratio;
-        box.h = (rst[3] - rst[1]) * ratio;
-        result.push_back(box);
-    }
-    int a = 0;
-}
-
 std::vector<std::vector<nanodet::DetectRes>> nanodet::postProcess(const std::vector<cv::Mat> &vec_Mat,
-        float *output_1, float *output_2, float *output_3, float *output_4, float *output_5, float *output_6,
-        const int &outSize_1, const int &outSize_2, const int &outSize_3, const int &outSize_4, const int &outSize_5, const int &outSize_6) {
+        float *output, const int &outSize) {
     std::vector<std::vector<DetectRes>> vec_result;
     int index = 0;
     for (const cv::Mat &src_img : vec_Mat)
     {
-        std::vector<DetectRes> result, result1, result2, result3;
-        float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
-        float *out1 = output_1 + index * outSize_1;
-        float *out2 = output_2 + index * outSize_2;
-        float *out3 = output_3 + index * outSize_3;
-        float *box1 = output_4 + index * outSize_4;
-        float *box2 = output_5 + index * outSize_5;
-        float *box3 = output_6 + index * outSize_6;
-        decode_boxes(out1, box1, result1, ratio, outSize_1, outSize_4, strides[0], anchor_mat[0]);
-        decode_boxes(out2, box2, result2, ratio, outSize_2, outSize_5, strides[1], anchor_mat[1]);
-        decode_boxes(out3, box3, result3, ratio, outSize_3, outSize_6, strides[2], anchor_mat[2]);
-        result.insert(result.end(), result1.begin(), result1.end());
-        result.insert(result.end(), result2.begin(), result2.end());
-        result.insert(result.end(), result3.begin(), result3.end());
+        std::vector<DetectRes> result;
+        float *out = output + index * outSize;
+        float ratio = std::max(float(src_img.cols) / float(IMAGE_WIDTH), float(src_img.rows) / float(IMAGE_HEIGHT));
+        cv::Mat result_matrix = cv::Mat(refer_rows, CATEGORY + 4, CV_32FC1, out);
+        for (int row_num = 0; row_num < refer_rows; row_num++) {
+            DetectRes box;
+            auto *row = result_matrix.ptr<float>(row_num);
+            auto max_pos = std::max_element(row + 4, row + CATEGORY + 4);
+            box.prob = row[max_pos - row];
+            if (box.prob < obj_threshold)
+                continue;
+            box.classes = max_pos - row - 4;
+            auto *anchor = refer_matrix.ptr<float>(row_num);
+            box.x = (anchor[0] - row[0] * anchor[2] + anchor[0] + row[2] * anchor[2]) / 2 * ratio;
+            box.y = (anchor[1] - row[1] * anchor[2] + anchor[1] + row[3] * anchor[2]) / 2 * ratio;
+            box.w = (row[2] + row[0]) * anchor[2] * ratio;
+            box.h = (row[3] + row[1]) * anchor[2] * ratio;
+            result.push_back(box);
+        }
         NmsDetect(result);
         vec_result.push_back(result);
         index++;

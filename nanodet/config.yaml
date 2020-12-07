@@ -11,4 +11,3 @@ nanodet:
   obj_threshold: 0.3
   nms_threshold: 0.6
   strides:       [8, 16, 32]
-  reg_max:       7

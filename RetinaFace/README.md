@@ -50,6 +50,8 @@ make -j
 ./RetinaFace_trt ../config_anti.yaml ../samples
 ```
 
+For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/110677016](https://blog.csdn.net/linghu8812/article/details/110677016)
+
 ## 6.Results
 - RetinaFace result
 

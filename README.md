@@ -16,6 +16,7 @@ models|framework|instruction
 [FCN](FCN)|GluonCV|MXNet GluonCV semantic segmentation example
 [gender-age](gender-age)|MXNet Symbol|MXNet Symbol and face gender and age recognize example
 [ghostnet](ghostnet)|PyTorch|PyTorch example
+[nanodet](nanodet)|PyTorch|PyTorchlightweight anchor-free object detection example 
 [RetinaFace](RetinaFace)|MXNet Symbol|MXNet Symbol and face detection example
 [ScaledYOLOv4](ScaledYOLOv4)|PyTorch|YOLOv4 large with PyTorch implementation
 [seresnext](seresnext)|PyTorch|PyTorch example

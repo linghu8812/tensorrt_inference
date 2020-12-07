@@ -3,31 +3,6 @@
 #include "common.hpp"
 
 
-inline float fast_exp(float x)
-{
-    union {
-        uint32_t i;
-        float f;
-    } v{};
-    v.i = (1 << 23) * (1.4426950409 * x + 126.93490512f);
-    return v.f;
-}
-
-template<typename _Tp>
-int activation_function_softmax(const _Tp* src, _Tp* dst, int length)
-{
-    const _Tp alpha = *std::max_element(src, src + length);
-    _Tp denominator{ 0 };
-    for (int i = 0; i < length; ++i) {
-        dst[i] = fast_exp(src[i] - alpha);
-        denominator += dst[i];
-    }
-    for (int i = 0; i < length; ++i) {
-        dst[i] /= denominator;
-    }
-    return 0;
-}
-
 nanodet::nanodet(const std::string &config_file) {
     YAML::Node root = YAML::LoadFile(config_file);
     YAML::Node config = root["nanodet"];
@@ -191,6 +166,9 @@ void nanodet::EngineInference(const std::vector<std::string> &image_list, const 
             delete[] out_1;
             delete[] out_2;
             delete[] out_3;
+            delete[] out_4;
+            delete[] out_5;
+            delete[] out_6;
             auto r_end = std::chrono::high_resolution_clock::now();
             float total_res = std::chrono::duration<float, std::milli>(r_end - r_start).count();
             std::cout << "Post process take: " << total_res << " ms." << std::endl;
@@ -271,20 +249,11 @@ void nanodet::decode_boxes(float *out, float *box, std::vector<nanodet::DetectRe
         const int &boxSize, const int &stride, const cv::Mat &anchor) {
     int rows = outSize / CATEGORY;
     cv::Mat score_mat = cv::Mat(rows, CATEGORY, CV_32FC1, out);
-    cv::Mat boxes_mat = cv::Mat(rows, boxSize / rows, CV_32FC1, box);
-    cv::Mat reshape_mat = boxes_mat.reshape(0, boxes_mat.rows * 4);
-    float project[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    cv::Mat project_mat = cv::Mat(8, 1, CV_32FC1, project);
-    for (int row = 0; row < rows * 4; row++) {
-        auto o_p = reshape_mat.ptr<float>(row);
-        activation_function_softmax(o_p, o_p, reshape_mat.cols);
-    }
-    cv::Mat box_result = reshape_mat * project_mat;
-    box_result = box_result.reshape(0, box_result.rows / 4) * stride;
-    box_result.col(0) = anchor.col(0) - box_result.col(0);
-    box_result.col(1) = anchor.col(1) - box_result.col(1);
-    box_result.col(2) = anchor.col(0) + box_result.col(2);
-    box_result.col(3) = anchor.col(1) + box_result.col(3);
+    cv::Mat boxes_mat = cv::Mat(rows, boxSize / rows, CV_32FC1, box) * stride;
+    boxes_mat.col(0) = anchor.col(0) - boxes_mat.col(0);
+    boxes_mat.col(1) = anchor.col(1) - boxes_mat.col(1);
+    boxes_mat.col(2) = anchor.col(0) + boxes_mat.col(2);
+    boxes_mat.col(3) = anchor.col(1) + boxes_mat.col(3);
     for (int row = 0; row < rows; row++) {
         DetectRes box;
         auto score = score_mat.ptr<float>(row);
@@ -293,7 +262,7 @@ void nanodet::decode_boxes(float *out, float *box, std::vector<nanodet::DetectRe
         if (box.prob < obj_threshold)
             continue;
         box.classes = max_pos - score;
-        auto rst = box_result.ptr<float>(row);
+        auto rst = boxes_mat.ptr<float>(row);
         box.x = (rst[0] + rst[2]) / 2 * ratio;
         box.y = (rst[1] + rst[3]) / 2 * ratio;
         box.w = (rst[2] - rst[0]) * ratio;
@@ -312,15 +281,15 @@ std::vector<std::vector<nanodet::DetectRes>> nanodet::postProcess(const std::vec
     {
         std::vector<DetectRes> result, result1, result2, result3;
         float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
-        float *box1 = output_1 + index * outSize_1;
-        float *out1 = output_2 + index * outSize_2;
-        float *box2 = output_3 + index * outSize_3;
-        float *out2 = output_4 + index * outSize_4;
-        float *out3 = output_5 + index * outSize_5;
+        float *out1 = output_1 + index * outSize_1;
+        float *out2 = output_2 + index * outSize_2;
+        float *out3 = output_3 + index * outSize_3;
+        float *box1 = output_4 + index * outSize_4;
+        float *box2 = output_5 + index * outSize_5;
         float *box3 = output_6 + index * outSize_6;
-        decode_boxes(out1, box1, result1, ratio, outSize_2, outSize_1, strides[0], anchor_mat[0]);
-        decode_boxes(out2, box2, result2, ratio, outSize_4, outSize_3, strides[1], anchor_mat[1]);
-        decode_boxes(out3, box3, result3, ratio, outSize_5, outSize_6, strides[2], anchor_mat[2]);
+        decode_boxes(out1, box1, result1, ratio, outSize_1, outSize_4, strides[0], anchor_mat[0]);
+        decode_boxes(out2, box2, result2, ratio, outSize_2, outSize_5, strides[1], anchor_mat[1]);
+        decode_boxes(out3, box3, result3, ratio, outSize_3, outSize_6, strides[2], anchor_mat[2]);
         result.insert(result.end(), result1.begin(), result1.end());
         result.insert(result.end(), result2.begin(), result2.end());
         result.insert(result.end(), result3.begin(), result3.end());

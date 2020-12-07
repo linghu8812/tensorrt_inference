@@ -8,7 +8,7 @@ nanodet:
   IMAGE_HEIGHT:  320
   img_mean:      [ 103.53, 116.28, 123.675 ]
   img_std:       [ 57.375,  57.12,  58.395 ]
-  obj_threshold: 0.35
+  obj_threshold: 0.3
   nms_threshold: 0.6
   strides:       [8, 16, 32]
   reg_max:       7

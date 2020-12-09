@@ -8,8 +8,6 @@ import argparse
 
 
 class DarkNetParser(object):
-    """Definition of a parser for DarkNet-based YOLOv3-608 (only tested for this topology)."""
-
     def __init__(self, supported_layers):
         """Initializes a DarkNetParser object.
 
@@ -18,18 +16,18 @@ class DarkNetParser(object):
         parameters are only added to the class dictionary if a parsed layer is included.
         """
 
-        # A list of YOLOv3 layers containing dictionaries with all layer
+        # A list of YOLOv4 layers containing dictionaries with all layer
         # parameters:
         self.layer_configs = OrderedDict()
         self.supported_layers = supported_layers
         self.layer_counter = 0
 
     def parse_cfg_file(self, cfg_file_path):
-        """Takes the yolov3.cfg file and parses it layer by layer,
+        """Takes the yolov4.cfg file and parses it layer by layer,
         appending each layer's parameters as a dictionary to layer_configs.
 
         Keyword argument:
-        cfg_file_path -- path to the yolov3.cfg file as string
+        cfg_file_path -- path to the yolov4.cfg file as string
         """
         with open(cfg_file_path, 'r') as cfg_file:
             remainder = cfg_file.read()
@@ -211,7 +209,7 @@ class ResizeParams(object):
 
 
 class ROIParams(object):
-    # Helper class to store the scale parameter for an Resize node.
+    # Helper class to store the scale parameter for an ROI node.
 
     def __init__(self, node_name, value):
         """Constructor based on the base node name (e.g. 86_Resize),
@@ -231,7 +229,7 @@ class ROIParams(object):
 
 
 class ReshapeParams(object):
-    # Helper class to store the scale parameter for an Resize node.
+    # Helper class to store the scale parameter for an Reshape node.
 
     def __init__(self, node_name, value):
         """Constructor based on the base node name (e.g. 86_Resize),
@@ -251,7 +249,7 @@ class ReshapeParams(object):
 
 
 class StartParams(object):
-    # Helper class to store the scale parameter for an Resize node.
+    # Helper class to store the scale parameter for an Start node.
 
     def __init__(self, node_name, value):
         """Constructor based on the base node name (e.g. 86_Resize),
@@ -271,7 +269,7 @@ class StartParams(object):
 
 
 class EndParams(object):
-    # Helper class to store the scale parameter for an Resize node.
+    # Helper class to store the scale parameter for an End node.
 
     def __init__(self, node_name, value):
         """Constructor based on the base node name (e.g. 86_Resize),
@@ -291,7 +289,7 @@ class EndParams(object):
 
 
 class AxesParams(object):
-    # Helper class to store the scale parameter for an Resize node.
+    # Helper class to store the scale parameter for an Axes node.
 
     def __init__(self, node_name, value):
         """Constructor based on the base node name (e.g. 86_Resize),
@@ -311,7 +309,7 @@ class AxesParams(object):
 
 
 class StepParams(object):
-    # Helper class to store the scale parameter for an Resize node.
+    # Helper class to store the scale parameter for an Step node.
 
     def __init__(self, node_name, value):
         """Constructor based on the base node name (e.g. 86_Resize),
@@ -337,7 +335,7 @@ class WeightLoader(object):
     """
 
     def __init__(self, weights_file_path):
-        """Initialized with a path to the YOLOv3 .weights file.
+        """Initialized with a path to the YOLOv4 .weights file.
 
         Keyword argument:
         weights_file_path -- path to the weights file.
@@ -434,7 +432,7 @@ class WeightLoader(object):
         return initializer, inputs
 
     def _open_weights_file(self, weights_file_path):
-        """Opens a YOLOv3 DarkNet file stream and skips the header.
+        """Opens a YOLOv4 DarkNet file stream and skips the header.
 
         Keyword argument:
         weights_file_path -- path to the weights file.
@@ -496,7 +494,7 @@ class GraphBuilderONNX(object):
     """Class for creating an ONNX graph from a previously generated list of layer dictionaries."""
 
     def __init__(self, output_tensors):
-        """Initialize with all DarkNet default parameters used creating YOLOv3,
+        """Initialize with all DarkNet default parameters used creating YOLOv4,
         and specify the output tensors as an OrderedDict for their output dimensions
         with their names as keys.
 
@@ -522,10 +520,9 @@ class GraphBuilderONNX(object):
             layer_configs,
             weights_file_path,
             neck,
-            sigmoid=False,
             verbose=True):
         """Iterate over all layer configs (parsed from the DarkNet representation
-        of YOLOv3-608), create an ONNX graph, populate it with weights from the weights
+        of YOLOv4-608), create an ONNX graph, populate it with weights from the weights
         file and return the graph definition.
 
         Keyword arguments:
@@ -555,7 +552,7 @@ class GraphBuilderONNX(object):
         if neck == 'FPN':
             transposes = transposes[::-1]
 
-        output_name = 'sigmoid' if sigmoid else'ouputs'
+        output_name = 'ouputs'
         route_node = helper.make_node(
             'Concat',
             axis=1,
@@ -564,16 +561,6 @@ class GraphBuilderONNX(object):
             name=output_name,
         )
         self._nodes.append(route_node)
-
-        if sigmoid:
-            sigmoid_name, output_name = output_name, 'ouputs'
-            sigmoid_node = helper.make_node(
-                'Sigmoid',
-                inputs=[sigmoid_name],
-                outputs=[output_name],
-                name=output_name,
-            )
-            self._nodes.append(sigmoid_node)
 
         output_dims = (self.batch_size, int(total_grids), self.classes + 5)
         outputs = [helper.make_tensor_value_info(
@@ -789,6 +776,18 @@ class GraphBuilderONNX(object):
             self._nodes.append(relu_node)
             inputs = [layer_name_relu]
             layer_name_output = layer_name_relu
+        elif layer_dict['activation'] == 'logistic':
+            layer_name_logistic = layer_name + '_logistic'
+
+            logistic_node = helper.make_node(
+                'Sigmoid',
+                inputs=inputs,
+                outputs=[layer_name_logistic],
+                name=layer_name_logistic
+            )
+            self._nodes.append(logistic_node)
+            inputs = [layer_name_logistic]
+            layer_name_output = layer_name_logistic
         elif layer_dict['activation'] == 'mish':
             layer_name_softplus = layer_name + '_softplus'
 
@@ -1044,8 +1043,7 @@ class GraphBuilderONNX(object):
         return output_name
 
 
-def main(cfg_file='yolov4.cfg', weights_file='yolov4.weights', output_file='yolov4.onnx', strides=None, neck='PAN',
-         sigmoid=False):
+def main(cfg_file='yolov4.cfg', weights_file='yolov4.weights', output_file='yolov4.onnx', strides=None, neck='PAN'):
     cfg_file_path = cfg_file
 
     supported_layers = ['net', 'convolutional', 'shortcut',
@@ -1065,7 +1063,9 @@ def main(cfg_file='yolov4.cfg', weights_file='yolov4.weights', output_file='yolo
         if 'yolo' in layer_key:
             yolo_layer = layer_key
             num_anchors.append(len(layer_configs[yolo_layer]['mask']))
-            conv_layers.append(conv_layer)
+            layer_name = '' if layer_configs[conv_layer]['activation'] == 'linear' \
+                else f"_{layer_configs[conv_layer]['activation']}"
+            conv_layers.append(conv_layer + layer_name)
 
     classes = layer_configs[yolo_layer]['classes']
 
@@ -1087,7 +1087,6 @@ def main(cfg_file='yolov4.cfg', weights_file='yolov4.weights', output_file='yolo
         layer_configs=layer_configs,
         weights_file_path=weights_file_path,
         neck=neck,
-        sigmoid=sigmoid,
         verbose=True)
     # Once we have the model definition, we do not need the builder anymore:
     del builder
@@ -1108,7 +1107,6 @@ if __name__ == '__main__':
     parser.add_argument('--output_file', type=str, default='yolov4.onnx', help='yolo onnx file')
     parser.add_argument('--strides', nargs='+', type=int, default=[8, 16, 32], help='YOLO model cell size')
     parser.add_argument('--neck', type=str, default='PAN', help='use which kind neck')
-    parser.add_argument('--sigmoid', action='store_true', help='sigmoid yolo output layer')
     args = parser.parse_args()
     main(cfg_file=args.cfg_file, weights_file=args.weights_file, output_file=args.output_file, strides=args.strides,
-         neck=args.neck, sigmoid=args.sigmoid)
+         neck=args.neck)

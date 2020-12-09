@@ -10,6 +10,7 @@ model|weights
 yolov4|[weights](https://drive.google.com/open?id=1sWNozS0emz7bmQTUWDLvsubLGnCwUiIS)
 yolov4-tiny|[weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights)
 yolov4x-mish|[weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4x-mish.weights)
+yolov4-csp|[weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-csp.weights)
 yolov3|[weights](https://pjreddie.com/media/files/yolov3.weights)
 yolov3-spp|[weights](https://pjreddie.com/media/files/yolov3-spp.weights)
 yolov3-tiny|[weights](https://pjreddie.com/media/files/yolov3-tiny.weights)
@@ -25,9 +26,10 @@ python3 export_onnx.py
 ```
 python3 export_onnx.py --cfg_file cfg/yolov4-tiny.cfg --weights_file yolov4-tiny.weights --output_file yolov4-tiny.onnx --strides 32 16 --neck FPN
 ```
-- export yolov4x-mish onnx
+- export yolov4x-mish, yolov4-csp onnx
 ```
-python3 export_onnx.py --cfg_file cfg/yolov4x-mish.cfg --weights_file yolov4x-mish.weights --output_file yolov4x-mish.onnx --sigmoid
+python3 export_onnx.py --cfg_file cfg/yolov4x-mish.cfg --weights_file yolov4x-mish.weights --output_file yolov4x-mish.onnx
+python3 export_onnx.py --cfg_file cfg/yolov4-csp.cfg --weights_file yolov4-csp.weights --output_file yolov4-csp.onnx
 ```
 - export yolov3, yolov3-spp onnx
 ```

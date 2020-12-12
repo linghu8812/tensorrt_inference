@@ -3,6 +3,11 @@
 ## **Install Depends**
 see [INSTALL.md](INSTALL.md)
 
+## **Build from Docker**
+```
+docker build -t tensorrt_inference:0.1.0_rc .
+```
+
 ## **Supported Models**
 
 models|framework|instruction

@@ -1,0 +1,7 @@
+MiniFASNet:
+    onnx_file:     "../2.7_80x80_MiniFASNetV2.onnx"
+    engine_file:   "../2.7_80x80_MiniFASNetV2.trt"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   80
+    IMAGE_HEIGHT:  80

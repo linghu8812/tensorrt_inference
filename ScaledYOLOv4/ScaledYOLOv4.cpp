@@ -23,7 +23,7 @@ ScaledYOLOv4::ScaledYOLOv4(const std::string &config_file) {
     int index = 0;
     for (const int &stride : strides)
     {
-        grids.push_back({num_anchors[index], int(IMAGE_WIDTH / stride), int(IMAGE_HEIGHT / stride)});
+        grids.push_back({num_anchors[index], int(IMAGE_HEIGHT / stride), int(IMAGE_WIDTH / stride)});
     }
     refer_rows = 0;
     refer_cols = 6;
@@ -191,9 +191,9 @@ void ScaledYOLOv4::GenerateReferMatrix() {
                 {
                     float *row = refer_matrix.ptr<float>(position);
                     row[0] = w;
-                    row[1] = grids[n][1];
+                    row[1] = grids[n][2];
                     row[2] = h;
-                    row[3] = grids[n][2];
+                    row[3] = grids[n][1];
                     row[4] = anchor[0];
                     row[5] = anchor[1];
                     position++;
@@ -220,9 +220,9 @@ std::vector<float> ScaledYOLOv4::prepareImage(std::vector<cv::Mat> &vec_img) {
         //HWC TO CHW
         int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
         std::vector<cv::Mat> split_img = {
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 2)),
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 1)),
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * index)
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * (index + 2)),
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * (index + 1)),
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * index)
         };
         index += 3;
         cv::split(flt_img, split_img);

@@ -1,6 +1,5 @@
 #include "lenet.h"
 #include "yaml-cpp/yaml.h"
-#include "common.hpp"
 
 LeNet::LeNet(const std::string &config_file) {
     YAML::Node root = YAML::LoadFile(config_file);
@@ -14,19 +13,6 @@ LeNet::LeNet(const std::string &config_file) {
 }
 
 LeNet::~LeNet() = default;
-
-void LeNet::LoadEngine() {
-    // create and load engine
-    std::fstream existEngine;
-    existEngine.open(engine_file, std::ios::in);
-    if (existEngine) {
-        readTrtFile(engine_file, engine);
-        assert(engine != nullptr);
-    } else {
-        onnxToTRTModel(onnx_file, engine_file, engine, BATCH_SIZE);
-        assert(engine != nullptr);
-    }
-}
 
 bool LeNet::InferenceFolder(const std::string &folder_name) {
     std::vector<std::string> sample_images = readFolder(folder_name);

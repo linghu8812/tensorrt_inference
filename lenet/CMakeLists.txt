@@ -35,5 +35,5 @@ set(YAML_LIB_DIR ../includes/yaml-cpp/libs)
 include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${COMMON_INCLUDE} ${YAML_INCLUDE})
 link_directories(${YAML_LIB_DIR})
 
-add_executable(lenet_trt main.cpp lenet.cpp)
+add_executable(lenet_trt main.cpp lenet.cpp ../includes/common/model.cpp ../includes/common/common.cpp)
 target_link_libraries(lenet_trt ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} yaml-cpp)

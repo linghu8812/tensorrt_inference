@@ -41,7 +41,8 @@ private:
     nvinfer1::IExecutionContext *context = nullptr;
     float obj_threshold;
     float nms_threshold;
-    std::vector<int> stride;
+    std::vector<int> strides;
+    std::vector<int> num_anchors;
     std::vector<std::vector<int>> anchors;
     std::vector<std::vector<int>> grids;
     std::vector<cv::Scalar> class_colors;

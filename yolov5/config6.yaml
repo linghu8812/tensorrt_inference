@@ -1,0 +1,13 @@
+yolov5:
+    onnx_file:     "../yolov5s6.onnx"
+    engine_file:   "../yolov5s6.trt"
+    labels_file:   "../coco.names"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   640
+    IMAGE_HEIGHT:  640
+    obj_threshold: 0.4
+    nms_threshold: 0.45
+    strides:       [8, 16, 32, 64]
+    num_anchors:   [3,  3,  3,  3]
+    anchors:       [[19,27], [44,40], [38,94], [96,68], [86,152], [180,137], [140,301], [303,264], [238,542], [436,615], [739,380], [925,792]]

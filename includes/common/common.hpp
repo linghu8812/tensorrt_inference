@@ -129,7 +129,7 @@ void onnxToTRTModel(const std::string &modelFile, // name of the onnx model
     }
     // Build the engine
     builder->setMaxBatchSize(BATCH_SIZE);
-    config->setMaxWorkspaceSize(16_MiB);
+    config->setMaxWorkspaceSize(1_GiB);
     config->setFlag(nvinfer1::BuilderFlag::kFP16);
 
     std::cout << "start building engine" << std::endl;

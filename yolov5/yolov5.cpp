@@ -14,15 +14,17 @@ YOLOv5::YOLOv5(const std::string &config_file) {
     IMAGE_HEIGHT = config["IMAGE_HEIGHT"].as<int>();
     obj_threshold = config["obj_threshold"].as<float>();
     nms_threshold = config["nms_threshold"].as<float>();
-    stride = config["stride"].as<std::vector<int>>();
+    strides = config["strides"].as<std::vector<int>>();
+    num_anchors = config["num_anchors"].as<std::vector<int>>();
+    assert(strides.size() == num_anchors.size());
     anchors = config["anchors"].as<std::vector<std::vector<int>>>();
     coco_labels = readCOCOLabel(labels_file);
     CATEGORY = coco_labels.size();
-    grids = {
-            {3, int(IMAGE_WIDTH / stride[0]), int(IMAGE_HEIGHT / stride[0])},
-            {3, int(IMAGE_WIDTH / stride[1]), int(IMAGE_HEIGHT / stride[1])},
-            {3, int(IMAGE_WIDTH / stride[2]), int(IMAGE_HEIGHT / stride[2])},
-    };
+    int index = 0;
+    for (const int &stride : strides)
+    {
+        grids.push_back({num_anchors[index], int(IMAGE_HEIGHT / stride), int(IMAGE_WIDTH / stride)});
+    }
     class_colors.resize(CATEGORY);
     srand((int) time(nullptr));
     for (cv::Scalar &class_color : class_colors)
@@ -188,9 +190,9 @@ std::vector<float> YOLOv5::prepareImage(std::vector<cv::Mat> &vec_img) {
         //HWC TO CHW
         int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
         std::vector<cv::Mat> split_img = {
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 2)),
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 1)),
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * index)
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * (index + 2)),
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * (index + 1)),
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * index)
         };
         index += 3;
         cv::split(flt_img, split_img);
@@ -224,8 +226,8 @@ std::vector<std::vector<YOLOv5::DetectRes>> YOLOv5::postProcess(const std::vecto
                         if (box.prob < obj_threshold)
                             continue;
                         box.classes = max_pos - row - 5;
-                        box.x = (row[0] * 2 - 0.5 + w) / grids[n][1] * IMAGE_WIDTH * ratio;
-                        box.y = (row[1] * 2 - 0.5 + h) / grids[n][2] * IMAGE_HEIGHT * ratio;
+                        box.x = (row[0] * 2 - 0.5 + w) / grids[n][2] * IMAGE_WIDTH * ratio;
+                        box.y = (row[1] * 2 - 0.5 + h) / grids[n][1] * IMAGE_HEIGHT * ratio;
                         box.w = pow(row[2] * 2, 2) * anchor[0] * ratio;
                         box.h = pow(row[3] * 2, 2) * anchor[1] * ratio;
                         result.push_back(box);

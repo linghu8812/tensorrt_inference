@@ -11,7 +11,7 @@ import torch.nn as nn
 
 import models
 from models.experimental import attempt_load
-from utils.activations import Hardswish
+from utils.activations import Hardswish, SiLU
 from utils.general import set_logging
 
 if __name__ == '__main__':
@@ -33,8 +33,11 @@ if __name__ == '__main__':
     # Update model
     for k, m in model.named_modules():
         m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatability
-        if isinstance(m, models.common.Conv) and isinstance(m.act, nn.Hardswish):
-            m.act = Hardswish()  # assign activation
+        if isinstance(m, models.common.Conv):  # assign export-friendly activations
+            if isinstance(m.act, nn.Hardswish):
+                m.act = Hardswish()
+            elif isinstance(m.act, nn.SiLU):
+                m.act = SiLU()
         # if isinstance(m, models.yolo.Detect):
         #     m.forward = m.forward_export  # assign forward (optional)
     model.model[-1].export = True  # set Detect() layer export=True

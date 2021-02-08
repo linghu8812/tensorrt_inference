@@ -24,8 +24,13 @@ make -j
 ```
 
 ## 4.Run yolov5_trt
+- inference with yolov5s
 ```
 ./yolov5_trt ../config.yaml ../samples
+```
+- inference with yolov5s6
+```
+./yolov5_trt ../config6.yaml ../samples
 ```
 
 For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/109322729](https://blog.csdn.net/linghu8812/article/details/109322729)

@@ -23,12 +23,15 @@ protected:
     virtual std::vector<float> prepareImage(std::vector<cv::Mat> & image) = 0;
     std::string onnx_file;
     std::string engine_file;
+    std::string labels_file;
     int BATCH_SIZE;
     int INPUT_CHANNEL;
     int IMAGE_WIDTH;
     int IMAGE_HEIGHT;
     nvinfer1::ICudaEngine *engine;
     nvinfer1::IExecutionContext *context;
+    std::vector<float> img_mean;
+    std::vector<float> img_std;
 };
 
 #endif //TENSORRT_INFERENCE_MODEL_H

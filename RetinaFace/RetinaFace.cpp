@@ -19,9 +19,11 @@ RetinaFace::RetinaFace(const std::string &config_file) {
     feature_steps = config["feature_steps"].as<std::vector<int>>();
     for (const int step:feature_steps) {
         assert(step != 0);
-        int feature_map = IMAGE_HEIGHT / step;
+        int feature_height = IMAGE_HEIGHT / step;
+        int feature_width = IMAGE_WIDTH / step;
+        std::vector<int> feature_map = { feature_height, feature_width };
         feature_maps.push_back(feature_map);
-        int feature_size = feature_map * feature_map;
+        int feature_size = feature_height * feature_width;
         feature_sizes.push_back(feature_size);
     }
     anchor_sizes = config["anchor_sizes"].as<std::vector<std::vector<int>>>();
@@ -196,14 +198,13 @@ void RetinaFace::GenerateAnchors() {
     refer_matrix = cv::Mat(sum_of_feature, bbox_head, CV_32FC1);
     int line = 0;
     for(size_t feature_map = 0; feature_map < feature_maps.size(); feature_map++) {
-        for (int height = 0; height < feature_maps[feature_map]; ++height) {
-            for (int width = 0; width < feature_maps[feature_map]; ++width) {
+        for (int height = 0; height < feature_maps[feature_map][0]; ++height) {
+            for (int width = 0; width < feature_maps[feature_map][1]; ++width) {
                 for (int anchor = 0; anchor < anchor_sizes[feature_map].size(); ++anchor) {
                     auto *row = refer_matrix.ptr<float>(line);
                     row[0] = base_cx + (float)width * feature_steps[feature_map];
                     row[1] = base_cy + (float)height * feature_steps[feature_map];
                     row[2] = anchor_sizes[feature_map][anchor];
-                    row[3] = anchor_sizes[feature_map][anchor];
                     line++;
                 }
             }
@@ -229,9 +230,9 @@ std::vector<float> RetinaFace::prepareImage(std::vector<cv::Mat> &vec_img) {
         //HWC TO CHW
         int channelLength = IMAGE_WIDTH * IMAGE_HEIGHT;
         std::vector<cv::Mat> split_img = {
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 2)),
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * (index + 1)),
-                cv::Mat(IMAGE_WIDTH, IMAGE_HEIGHT, CV_32FC1, data + channelLength * index)
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * (index + 2)),
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * (index + 1)),
+                cv::Mat(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC1, data + channelLength * index)
         };
         index += 3;
         cv::split(flt_img, split_img);
@@ -249,7 +250,7 @@ std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std:
         float *out = output + index * outSize;
         float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
 
-        int result_cols = (detect_mask ? 2 : 1) + bbox_head + landmark_head;
+        int result_cols = (detect_mask ? 3 : 2) + bbox_head + landmark_head;
         cv::Mat result_matrix = cv::Mat(sum_of_feature, result_cols, CV_32FC1, out);
 
         for (int item = 0; item < result_matrix.rows; ++item) {
@@ -259,25 +260,25 @@ std::vector<std::vector<RetinaFace::FaceRes>> RetinaFace::postProcess(const std:
                 headbox.confidence = current_row[0];
                 auto *anchor = refer_matrix.ptr<float>(item);
                 auto *bbox = current_row + 1;
-                auto *keyp = current_row + 1 + bbox_head;
-                auto *mask = current_row + 1 + bbox_head + landmark_head;
+                auto *keyp = current_row + 2 + bbox_head;
+                auto *mask = current_row + 2 + bbox_head + landmark_head;
 
                 headbox.face_box.x = (anchor[0] + bbox[0] * anchor[2]) * ratio;
-                headbox.face_box.y = (anchor[1] + bbox[1] * anchor[3]) * ratio;
+                headbox.face_box.y = (anchor[1] + bbox[1] * anchor[2]) * ratio;
                 headbox.face_box.w = anchor[2] * exp(bbox[2]) * ratio;
-                headbox.face_box.h = anchor[3] * exp(bbox[3]) * ratio;
+                headbox.face_box.h = anchor[2] * exp(bbox[3]) * ratio;
 
                 headbox.keypoints = {
                         cv::Point2f((anchor[0] + keyp[0] * anchor[2] * landmark_std) * ratio,
-                                    (anchor[1] + keyp[1] * anchor[3] * landmark_std) * ratio),
+                                    (anchor[1] + keyp[1] * anchor[2] * landmark_std) * ratio),
                         cv::Point2f((anchor[0] + keyp[2] * anchor[2] * landmark_std) * ratio,
-                                    (anchor[1] + keyp[3] * anchor[3] * landmark_std) * ratio),
+                                    (anchor[1] + keyp[3] * anchor[2] * landmark_std) * ratio),
                         cv::Point2f((anchor[0] + keyp[4] * anchor[2] * landmark_std) * ratio,
-                                    (anchor[1] + keyp[5] * anchor[3] * landmark_std) * ratio),
+                                    (anchor[1] + keyp[5] * anchor[2] * landmark_std) * ratio),
                         cv::Point2f((anchor[0] + keyp[6] * anchor[2] * landmark_std) * ratio,
-                                    (anchor[1] + keyp[7] * anchor[3] * landmark_std) * ratio),
+                                    (anchor[1] + keyp[7] * anchor[2] * landmark_std) * ratio),
                         cv::Point2f((anchor[0] + keyp[8] * anchor[2] * landmark_std) * ratio,
-                                    (anchor[1] + keyp[9] * anchor[3] * landmark_std) * ratio)
+                                    (anchor[1] + keyp[9] * anchor[2] * landmark_std) * ratio)
                 };
 
                 if (detect_mask and mask[0] > mask_thresh)

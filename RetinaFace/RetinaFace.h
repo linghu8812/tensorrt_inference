@@ -49,11 +49,11 @@ private:
 
     cv::Mat refer_matrix;
     int anchor_num = 2;
-    int bbox_head = 4;
+    int bbox_head = 3;
     int landmark_head = 10;
     std::vector<int> feature_sizes;
     std::vector<int> feature_steps;
-    std::vector<int> feature_maps;
+    std::vector<std::vector<int>> feature_maps;
     std::vector<std::vector<int>> anchor_sizes;
     int sum_of_feature;
 };

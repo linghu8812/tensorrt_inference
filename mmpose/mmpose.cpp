@@ -128,14 +128,30 @@ void mmpose::EngineInference(const std::vector<std::string> &image_list, const i
                 for (const auto &bone : skeleton) {
                     if (current_points[bone[0]].prob < point_thresh or current_points[bone[1]].prob < point_thresh)
                         continue;
+                    cv::Scalar color;
+                    if (bone[0] < 5 or bone[1] < 5)
+                        color = cv::Scalar(0, 255, 0);
+                    else if (bone[0] > 12 or bone[1] > 12)
+                        color = cv::Scalar(255, 0, 0);
+                    else if (bone[0] > 4 and bone[0] < 11 and bone[1] > 4 and bone[1] < 11)
+                        color = cv::Scalar(0, 255, 255);
+                    else
+                        color = cv::Scalar(255, 0, 255);
                     cv::line(org_img, cv::Point(current_points[bone[0]].x, current_points[bone[0]].y),
-                             cv::Point(current_points[bone[1]].x, current_points[bone[1]].y), cv::Scalar(0, 0, 255),
+                             cv::Point(current_points[bone[1]].x, current_points[bone[1]].y), color,
                              2);
                 }
                 for(const auto &point : current_points) {
                     if (point.prob < point_thresh)
                         continue;
-                    cv::circle(org_img, cv::Point(point.x, point.y), 5, cv::Scalar(0, 0, 255), -1, cv::LINE_8, 0);
+                    cv::Scalar color;
+                    if (point.number < 5)
+                        color = cv::Scalar(0, 255, 0);
+                    else if (point.number > 10)
+                        color = cv::Scalar(255, 0, 0);
+                    else
+                        color = cv::Scalar(0, 255, 255);
+                    cv::circle(org_img, cv::Point(point.x, point.y), 5, color, -1, cv::LINE_8, 0);
                 }
                 int pos = vec_name[i].find_last_of(".");
                 std::string rst_name = vec_name[i].insert(pos, "_");

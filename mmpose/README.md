@@ -19,3 +19,6 @@ make -j
 ```bash
 ./mmpose_trt ../config.yaml ../samples
 ```
+
+## 5.detect results
+![](result.jpg)

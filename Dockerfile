@@ -3,6 +3,9 @@ FROM nvidia/cuda:10.2-cudnn8-devel-ubuntu18.04
 WORKDIR /home/install/
 
 # apt-get 安装
+RUN apt-get update
+RUN apt-get install software-properties-common -y
+RUN add-apt-repository "deb http://security.ubuntu.com/ubuntu xenial-security main"
 RUN rm /etc/apt/sources.list.d/cuda.list /etc/apt/sources.list.d/nvidia-ml.list && \
     apt-get update && apt-get -y upgrade && apt-get -y install ssh vim build-essential cmake git libgtk2.0-dev pkg-config \
     libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev \

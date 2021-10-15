@@ -10,10 +10,7 @@
 ## 2.Export ONNX Model
 ```
 git clone https://github.com/linghu8812/yolov5.git
-```
-copy [export_onnx.py](export_onnx.py) into `yolov5/models` and run `export_onnx.py` to generate `yolov5s.onnx` and so on.
-```
-export PYTHONPATH="$PWD" && python3 models/export_onnx.py --weights ./weights/yolov5s.pt --img 640 --batch 1
+python3 export.py ---weights weights/yolov5s.pt --batch-size 10 --imgsz 640 --include onnx --simplify
 ```
 
 ## 3.Build yolov5_trt Project

@@ -97,7 +97,8 @@ void mmpose::EngineInference(const std::vector<std::string> &image_list, const i
             // DMA the input to the GPU,  execute the batch asynchronously, and DMA it back:
             std::cout << "host2device" << std::endl;
             cudaMemcpyAsync(buffers[0], curInput.data(), bufferSize[0], cudaMemcpyHostToDevice, stream);
-
+            cudaStreamSynchronize(stream);
+            
             // do inference
             std::cout << "execute" << std::endl;
             auto t_start = std::chrono::high_resolution_clock::now();

@@ -5,6 +5,13 @@ project(mmpose_trt)
 set(CMAKE_CXX_STANDARD 14)
 
 # CUDA
+SET(CMAKE_CUDA_COMPILER /usr/local/cuda-11.1/bin/nvcc)
+SET(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda-11.1)
+SET(TENSORRT_INCLUDE_DIR "/home/vid/tensorrt/TensorRT-7.2.3.4/include")
+SET(TENSORRT_LIBRARY_INFER "/home/vid/tensorrt/TensorRT-7.2.3.4/lib/libnvinfer.so")
+SET(TENSORRT_LIBRARY_ONNXPARSER "/home/vid/tensorrt/TensorRT-7.2.3.4/lib/libnvonnxparser.so")
+
+
 find_package(CUDA REQUIRED)
 message(STATUS "Find CUDA include at ${CUDA_INCLUDE_DIRS}")
 message(STATUS "Find CUDA libraries: ${CUDA_LIBRARIES}")
@@ -34,6 +41,8 @@ set(YAML_LIB_DIR ../includes/yaml-cpp/libs)
 
 include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${COMMON_INCLUDE} ${YAML_INCLUDE})
 link_directories(${YAML_LIB_DIR})
+
+# SET(NVPARSERS /home/vid/tensorrt/TensorRT-7.2.3.4/targets/x86_64-linux-gnu/lib/libnvparsers.so)
 
 add_executable(mmpose_trt main.cpp mmpose.cpp ../includes/common/model.cpp ../includes/common/common.cpp)
 target_link_libraries(mmpose_trt ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} yaml-cpp)

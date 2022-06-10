@@ -26,6 +26,7 @@ models|framework|instruction
 [nanodet](nanodet)|PyTorch|PyTorchlightweight anchor-free object detection example 
 [RetinaFace](RetinaFace)|MXNet Symbol|MXNet Symbol and face detection example
 [ScaledYOLOv4](ScaledYOLOv4)|PyTorch|YOLOv4 large with PyTorch implementation
+[scrfd](ScaledYOLOv4)|PyTorch|PyTorch scrfd face detection example
 [seresnext](seresnext)|PyTorch|PyTorch example
 [Yolov4](Yolov4)|darknet|darknet and object detection example
 [yolov5](yolov5)|PyTorch|PyTorch and object detection example

@@ -31,4 +31,5 @@ models|framework|instruction
 [Swin-Transformer](Swin-Transformer)|timm|timm image classification example
 [Yolov4](Yolov4)|darknet|darknet and object detection example
 [yolov5](yolov5)|PyTorch|PyTorch and object detection example
+[YOLOv6](YOLOv6)|PyTorch|PyTorch and object detection example
  

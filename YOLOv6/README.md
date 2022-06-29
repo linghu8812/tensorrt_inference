@@ -22,6 +22,8 @@ cmake ..
 make -j
 ```
 
+For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/125513929](https://blog.csdn.net/linghu8812/article/details/125513929)
+
 ## 4.Run YOLOv6_trt
 - inference with yolov6s
 ```

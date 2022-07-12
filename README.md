@@ -32,4 +32,5 @@ models|framework|instruction
 [Yolov4](Yolov4)|darknet|darknet and object detection example
 [yolov5](yolov5)|PyTorch|PyTorch and object detection example
 [YOLOv6](YOLOv6)|PyTorch|PyTorch and object detection example
+[yolov7](yolov7)|PyTorch|PyTorch and object detection example
  

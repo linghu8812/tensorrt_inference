@@ -251,10 +251,10 @@ std::vector<std::vector<YOLOv4::DetectRes>> YOLOv4::postProcess(const std::vecto
         for (int row_num = 0; row_num < refer_rows; row_num++) {
             DetectRes box;
             auto *row = result_matrix.ptr<float>(row_num);
+            if (row[4] < obj_threshold)
+                continue;
             auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
             box.prob = new_coords ? row[4] * row[max_pos - row] : sigmoid(row[4]) * sigmoid(row[max_pos - row]);
-            if (box.prob < obj_threshold)
-                continue;
             box.classes = max_pos - row - 5;
             auto *anchor = refer_matrix.ptr<float>(row_num);
             box.x = letter_box ? (float)(row[0] * 2 - 0.5 + anchor[0]) / anchor[1] * (float)IMAGE_WIDTH * ratio : (sigmoid(row[0]) + anchor[0]) / anchor[1] * (float)src_img.cols;

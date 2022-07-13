@@ -17,13 +17,13 @@ YOLOv5::YOLOv5(const std::string &config_file) {
     strides = config["strides"].as<std::vector<int>>();
     num_anchors = config["num_anchors"].as<std::vector<int>>();
     assert(strides.size() == num_anchors.size());
-    anchors = config["anchors"].as<std::vector<std::vector<int>>>();
     coco_labels = readCOCOLabel(labels_file);
     CATEGORY = coco_labels.size();
     int index = 0;
     for (const int &stride : strides)
     {
-        grids.push_back({num_anchors[index], int(IMAGE_HEIGHT / stride), int(IMAGE_WIDTH / stride)});
+        num_rows += int(IMAGE_HEIGHT / stride) * int(IMAGE_WIDTH / stride) * num_anchors[index];
+        index+=1;
     }
     class_colors.resize(CATEGORY);
     srand((int) time(nullptr));
@@ -209,30 +209,19 @@ std::vector<std::vector<YOLOv5::DetectRes>> YOLOv5::postProcess(const std::vecto
         std::vector<DetectRes> result;
         float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
         float *out = output + index * outSize;
-        int position = 0;
-        for (int n = 0; n < (int)grids.size(); n++)
-        {
-            for (int c = 0; c < grids[n][0]; c++)
-            {
-                std::vector<int> anchor = anchors[n * grids[n][0] + c];
-                for (int h = 0; h < grids[n][1]; h++)
-                    for (int w = 0; w < grids[n][2]; w++)
-                    {
-                        float *row = out + position * (CATEGORY + 5);
-                        position++;
-                        DetectRes box;
-                        auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
-                        box.prob = row[4] * row[max_pos - row];
-                        if (box.prob < obj_threshold)
-                            continue;
-                        box.classes = max_pos - row - 5;
-                        box.x = (row[0] * 2 - 0.5 + w) / grids[n][2] * IMAGE_WIDTH * ratio;
-                        box.y = (row[1] * 2 - 0.5 + h) / grids[n][1] * IMAGE_HEIGHT * ratio;
-                        box.w = pow(row[2] * 2, 2) * anchor[0] * ratio;
-                        box.h = pow(row[3] * 2, 2) * anchor[1] * ratio;
-                        result.push_back(box);
-                    }
-            }
+        for (int position = 0; position < num_rows; position++) {
+            float *row = out + position * (CATEGORY + 5);
+            DetectRes box;
+            if (row[4] < obj_threshold)
+                continue;
+            auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
+            box.prob = row[4] * row[max_pos - row];
+            box.classes = max_pos - row - 5;
+            box.x = row[0] * ratio;
+            box.y = row[1] * ratio;
+            box.w = row[2] * ratio;
+            box.h = row[3] * ratio;
+            result.push_back(box);
         }
         NmsDetect(result);
         vec_result.push_back(result);

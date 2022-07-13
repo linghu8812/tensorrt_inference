@@ -20,7 +20,8 @@ YOLOv6::YOLOv6(const std::string &config_file) {
     int index = 0;
     for (const int &stride : strides)
     {
-        grids.push_back({int(IMAGE_HEIGHT / stride), int(IMAGE_WIDTH / stride)});
+        num_rows += int(IMAGE_HEIGHT / stride) * int(IMAGE_WIDTH / stride);
+        index+=1;
     }
     class_colors.resize(CATEGORY);
     srand((int) time(nullptr));
@@ -206,24 +207,19 @@ std::vector<std::vector<YOLOv6::DetectRes>> YOLOv6::postProcess(const std::vecto
         std::vector<DetectRes> result;
         float ratio = float(src_img.cols) / float(IMAGE_WIDTH) > float(src_img.rows) / float(IMAGE_HEIGHT)  ? float(src_img.cols) / float(IMAGE_WIDTH) : float(src_img.rows) / float(IMAGE_HEIGHT);
         float *out = output + index * outSize;
-        int position = 0;
-        for (auto & grid : grids) {
-            for (int h = 0; h < grid[0]; h++)
-                for (int w = 0; w < grid[1]; w++) {
-                    float *row = out + position * (CATEGORY + 5);
-                    position++;
-                    DetectRes box;
-                    auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
-                    box.prob = row[4] * row[max_pos - row];
-                    if (box.prob < obj_threshold)
-                        continue;
-                    box.classes = max_pos - row - 5;
-                    box.x = row[0] * ratio;
-                    box.y = row[1] * ratio;
-                    box.w = row[2] * ratio;
-                    box.h = row[3] * ratio;
-                    result.push_back(box);
-                }
+        for (int position = 0; position < num_rows; position++) {
+            float *row = out + position * (CATEGORY + 5);
+            DetectRes box;
+            if (row[4] < obj_threshold)
+                continue;
+            auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
+            box.prob = row[4] * row[max_pos - row];
+            box.classes = max_pos - row - 5;
+            box.x = row[0] * ratio;
+            box.y = row[1] * ratio;
+            box.w = row[2] * ratio;
+            box.h = row[3] * ratio;
+            result.push_back(box);
         }
         NmsDetect(result);
         vec_result.push_back(result);

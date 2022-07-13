@@ -43,8 +43,7 @@ private:
     float nms_threshold;
     std::vector<int> strides;
     std::vector<int> num_anchors;
-    std::vector<std::vector<int>> anchors;
-    std::vector<std::vector<int>> grids;
+    int num_rows = 0;
     std::vector<cv::Scalar> class_colors;
 };
 

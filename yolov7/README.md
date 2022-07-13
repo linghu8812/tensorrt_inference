@@ -5,6 +5,8 @@
 - **yolov7 arxiv:** [YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors](https://arxiv.org/abs/2207.02696)
 - get yolov7 weights from here: [`yolov7.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7.pt) [`yolov7x.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7x.pt) [`yolov7-w6.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-w6.pt) [`yolov7-e6.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-e6.pt) [`yolov7-d6.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-d6.pt) [`yolov7-e6e.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7-e6e.pt)
 
+For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/125741951?spm=1001.2014.3001.5501](https://blog.csdn.net/linghu8812/article/details/125741951?spm=1001.2014.3001.5501)
+
 ## 2.Export ONNX Model
 Use the following command to export onnx model:
 first download yolov7 models to folder `weights`,

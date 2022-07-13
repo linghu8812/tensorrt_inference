@@ -211,9 +211,9 @@ std::vector<std::vector<yolov7::DetectRes>> yolov7::postProcess(const std::vecto
         for (int position = 0; position < num_rows; position++) {
             float *row = out + position * (CATEGORY + 5);
             DetectRes box;
-            auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
             if (row[4] < obj_threshold)
                 continue;
+            auto max_pos = std::max_element(row + 5, row + CATEGORY + 5);
             box.prob = row[4] * row[max_pos - row];
             box.classes = max_pos - row - 5;
             box.x = row[0] * ratio;

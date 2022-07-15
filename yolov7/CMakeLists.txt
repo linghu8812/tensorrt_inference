@@ -10,7 +10,7 @@ message(STATUS "Find CUDA include at ${CUDA_INCLUDE_DIRS}")
 message(STATUS "Find CUDA libraries: ${CUDA_LIBRARIES}")
 
 # TensorRT
-set(TENSORRT_ROOT /usr/src/tensorrt/)
+set(TENSORRT_ROOT /usr/local/cuda/)
 find_path(TENSORRT_INCLUDE_DIR NvInfer.h
         HINTS ${TENSORRT_ROOT} PATH_SUFFIXES include/)
 message(STATUS "Found TensorRT headers at ${TENSORRT_INCLUDE_DIR}")
@@ -34,6 +34,6 @@ set(YAML_LIB_DIR ../includes/yaml-cpp/libs)
 
 include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${COMMON_INCLUDE} ${YAML_INCLUDE})
 link_directories(${YAML_LIB_DIR})
-
+add_definitions(-O3 -g -w)
 add_executable(yolov7_trt main.cpp yolov7.cpp)
 target_link_libraries(yolov7_trt ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} yaml-cpp)

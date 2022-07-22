@@ -10,6 +10,7 @@ message(STATUS "Find CUDA include at ${CUDA_INCLUDE_DIRS}")
 message(STATUS "Find CUDA libraries: ${CUDA_LIBRARIES}")
 
 # TensorRT
+# set(TENSORRT_ROOT /usr/local/cuda/)
 set(TENSORRT_ROOT /usr/src/tensorrt/)
 find_path(TENSORRT_INCLUDE_DIR NvInfer.h
         HINTS ${TENSORRT_ROOT} PATH_SUFFIXES include/)

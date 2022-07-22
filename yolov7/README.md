@@ -51,3 +51,16 @@ yolov7:
 
 ## 5.Results:
 ![](prediction.jpg)
+
+## COCO AP evaluation
+
+1. Download COCO validation set images (http://images.cocodataset.org/zips/val2017.zip) and annotations (http://images.cocodataset.org/annotations/annotations_trainval2017.zip), unzip them.
+
+2. Compile and run yolov7 with `EXPORT_COCO_JSON` flag enabled
+
+3. Install the COCO python API, then run `coco_eval.py` (make sure the path in the script are correct)
+
+```
+python -m pip install pycocotools
+python coco_eval.py
+```

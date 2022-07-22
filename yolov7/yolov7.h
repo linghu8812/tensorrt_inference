@@ -4,9 +4,9 @@
 #include <opencv2/opencv.hpp>
 #include "NvInfer.h"
 
-#define EXPORT_COCO_JSON 1
-#define WRITE_IMG 0
-#define VERBOSE 0
+#define EXPORT_COCO_JSON 0
+#define WRITE_IMG 1
+#define VERBOSE 1
 
 #if EXPORT_COCO_JSON
 //https://github.com/ultralytics/yolov5/blob/d833ab3d2529626d4cc4c6ae28ce7858b9ca738f/utils/general.py#L321
@@ -20,6 +20,7 @@ static inline std::vector<size_t> getCoco80ToCoco91Class() {
 
 #include "json.hpp"
 using json = nlohmann::json;
+#define WRITE_IMG 0
 #endif
 
 class yolov7 {

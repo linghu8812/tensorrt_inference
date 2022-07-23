@@ -1,8 +1,0 @@
-lenet:
-    model_file:    "../mnist_net.pt"
-    onnx_file:     "../mnist_net.onnx"
-    engine_file:   "../mnist_net.trt"
-    BATCH_SIZE:    10
-    INPUT_CHANNEL: 1
-    IMAGE_WIDTH:   28
-    IMAGE_HEIGHT:  28

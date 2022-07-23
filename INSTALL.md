@@ -41,9 +41,15 @@ and input
 ```
 ## **yaml-cpp 0.6.3**
 - [download](https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.3.zip)
-- Install
+- Build static library
 ```
 mkdir build && cd build
 cmake ..
+make -j
+```
+- Build shared library
+```
+mkdir build && cd build
+cmake -DYAML_BUILD_SHARED_LIBS=on ..
 make -j
 ```

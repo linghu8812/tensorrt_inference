@@ -1,9 +1,0 @@
-CenterFace:
-  onnx_file:     "../centerface.onnx"
-  engine_file:   "../centerface.trt"
-  BATCH_SIZE:    1
-  INPUT_CHANNEL: 3
-  IMAGE_WIDTH:   640
-  IMAGE_HEIGHT:  640
-  obj_threshold: 0.5
-  nms_threshold: 0.45

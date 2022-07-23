@@ -12,25 +12,26 @@ docker build -t tensorrt_inference:0.1.0_rc .
 
 models|framework|instruction
 ---|---|---
-[lenet](lenet)|PyTorch|An example from model training to TensorRT model deploy
-[alexnet](alexnet)|MXNet Gluon|MXNet Gluon example
-[arcface](arcface)|MXNet Symbol|MXNet Symbol and face recognition example
-[CenterFace](CenterFace)|ONNX|rewrite ONNX model and face detection example
-[efficientnet](efficientnet)|Keras|Keras to ONNX example
-[face_alignment](face_alignment)|MXNet Symbol|MXNet Symbol and face key points  detection example
-[FCN](FCN)|GluonCV|MXNet GluonCV semantic segmentation example
-[gender-age](gender-age)|MXNet Symbol|MXNet Symbol and face gender and age recognize example
-[ghostnet](ghostnet)|PyTorch|PyTorch example
-[MiniFASNet](MiniFASNet)|PyTorch|PyTorch face anti spoofing example
-[mmpose](mmpose)|PyTorch|PyTorch person key points detect example
-[nanodet](nanodet)|PyTorch|PyTorchlightweight anchor-free object detection example 
-[RetinaFace](RetinaFace)|MXNet Symbol|MXNet Symbol and face detection example
-[ScaledYOLOv4](ScaledYOLOv4)|PyTorch|YOLOv4 large with PyTorch implementation
-[scrfd](ScaledYOLOv4)|PyTorch|PyTorch scrfd face detection example
-[seresnext](seresnext)|PyTorch|PyTorch example
-[Swin-Transformer](Swin-Transformer)|timm|timm image classification example
-[Yolov4](Yolov4)|darknet|darknet and object detection example
-[yolov5](yolov5)|PyTorch|PyTorch and object detection example
-[YOLOv6](YOLOv6)|PyTorch|PyTorch and object detection example
-[yolov7](yolov7)|PyTorch|PyTorch and object detection example
+[lenet](project/lenet)|PyTorch|An example from model training to TensorRT model deploy
+[alexnet](project/alexnet)|MXNet Gluon|MXNet Gluon example
+[arcface](project/arcface)|MXNet Symbol|MXNet Symbol and face recognition example
+[CenterFace](project/CenterFace)|ONNX|rewrite ONNX model and face detection example
+[efficientnet](project/efficientnet)|Keras|Keras to ONNX example
+[face_alignment](project/face_alignment)|MXNet Symbol|MXNet Symbol and face key points  detection example
+[fast-reid](project/fast-reid)|PyTorch|PyTorch and pedestrian reid example
+[FCN](project/FCN)|GluonCV|MXNet GluonCV semantic segmentation example
+[gender-age](project/gender-age)|MXNet Symbol|MXNet Symbol and face gender and age recognize example
+[ghostnet](project/ghostnet)|PyTorch|PyTorch example
+[MiniFASNet](project/MiniFASNet)|PyTorch|PyTorch face anti spoofing example
+[mmpose](project/mmpose)|PyTorch|PyTorch person key points detect example
+[nanodet](project/nanodet)|PyTorch|PyTorchlightweight anchor-free object detection example 
+[RetinaFace](project/RetinaFace)|MXNet Symbol|MXNet Symbol and face detection example
+[ScaledYOLOv4](project/ScaledYOLOv4)|PyTorch|YOLOv4 large with PyTorch implementation
+[scrfd](project/scrfd)|PyTorch|PyTorch scrfd face detection example
+[seresnext](project/seresnext)|PyTorch|PyTorch example
+[Swin-Transformer](project/Swin-Transformer)|timm|timm image classification example
+[Yolov4](project/Yolov4)|darknet|darknet and object detection example
+[yolov5](project/yolov5)|PyTorch|PyTorch and object detection example
+[YOLOv6](project/YOLOv6)|PyTorch|PyTorch and object detection example
+[yolov7](project/yolov7)|PyTorch|PyTorch and object detection example
  

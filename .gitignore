@@ -1,9 +1,8 @@
 .idea/
-*/.idea/
-*/.clion.source.upload.marker
-*/__pycache__/
-*/build/
-*/cmake-build-debug/
+.clion.source.upload.marker
+__pycache__/
+build/
+cmake-build-debug/
 
 *.trt
 *.onnx
@@ -12,3 +11,4 @@
 *symbol.json
 *.params
 *.weights
+*.so

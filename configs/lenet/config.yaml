@@ -1,0 +1,15 @@
+lenet:
+    model_file:    "../mnist_net.pt"
+    onnx_file:     "../mnist_net.onnx"
+    engine_file:   "../mnist_net.trt"
+    labels_file:   "../../../configs/labels/mnist.names"
+    BATCH_SIZE:    10
+    INPUT_CHANNEL: 1
+    IMAGE_WIDTH:   28
+    IMAGE_HEIGHT:  28
+    image_order:   "BCHW"
+    channel_order: "Gray"
+    img_mean:      [0.5]
+    img_std:       [0.5]
+    alpha:         255.0
+    resize:        "directly"

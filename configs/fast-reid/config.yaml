@@ -1,0 +1,13 @@
+fastreid:
+    onnx_file:     "../mgn_R50-ibn.onnx"
+    engine_file:   "../mgn_R50-ibn.trt"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   128
+    IMAGE_HEIGHT:  384
+    image_order:   "BCHW"
+    channel_order: "BGR"
+    img_mean:      [ 0, 0, 0 ]
+    img_std:       [ 1, 1, 1 ]
+    alpha:         1.0
+    resize:        "directly"

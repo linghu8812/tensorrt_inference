@@ -1,0 +1,19 @@
+nanodet:
+    onnx_file:     "../nanodet-m.onnx"
+    engine_file:   "../nanodet-m.trt"
+    labels_file:   "../../../configs/labels/coco.names"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   320
+    IMAGE_HEIGHT:  320
+    image_order:   "BCHW"
+    channel_order: "BGR"
+    obj_threshold: 0.4
+    nms_threshold: 0.45
+    agnostic:      False
+    strides:       [8, 16, 32]
+    num_anchors:   [0,  0,  0]
+    img_mean:      [ 103.53, 116.28, 123.675 ]
+    img_std:       [ 57.375,  57.12,  58.395 ]
+    alpha:         1.0
+    resize:        "keep_ratio"

@@ -1,0 +1,19 @@
+CenterFace:
+    onnx_file:     "../centerface_transpose.onnx"
+    engine_file:   "../centerface_transpose.trt"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   640
+    IMAGE_HEIGHT:  640
+    image_order:   "BCHW"
+    channel_order: "BGR"
+    obj_threshold: 0.5
+    nms_threshold: 0.45
+    img_mean:      [ 0, 0, 0 ]
+    img_std:       [ 1, 1, 1 ]    
+    detect_mask:   False
+    mask_thresh:   0.5
+    landmark_std:  1
+    feature_steps: [4]
+    alpha:         1.0
+    resize:        "keep_ratio"

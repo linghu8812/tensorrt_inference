@@ -1,0 +1,20 @@
+Yolov4:
+    onnx_file:     "../yolov4.onnx"
+    engine_file:   "../yolov4.trt"
+    labels_file:   "../../../configs/labels/coco.names"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   608
+    IMAGE_HEIGHT:  608
+    image_order:   "BCHW"
+    channel_order: "BGR"
+    obj_threshold: 0.4
+    nms_threshold: 0.45
+    agnostic:      False
+    strides:       [8, 16, 32]
+    num_anchors:   [3,  3,  3]
+    anchors:       [[12, 16], [19, 36], [40, 28], [36, 75], [76, 55], [72, 146], [142, 110], [192, 243], [459, 401]]
+    img_mean:      [ 0, 0, 0 ]
+    img_std:       [ 1, 1, 1 ]
+    alpha:         255.0
+    resize:        "directly"

@@ -51,15 +51,15 @@ make -j
 ## 5.Run Yolov4_trt
 - inference with yolov4
 ```
-./Yolov4_trt ../../../configs/Yolov4/config.yaml ../../../samples/detection
+./Yolov4_trt ../../../configs/Yolov4/config.yaml ../../../samples/detection_segmentation
 ```
 - inference with yolov4-tiny
 ```
-./Yolov4_trt ../../../configs/Yolov4/config-tiny.yaml ../../../samples/detection
+./Yolov4_trt ../../../configs/Yolov4/config-tiny.yaml ../../../samples/detection_segmentation
 ```
 - inference with yolov4x-mish
 ```
-./Yolov4_trt ../../../configs/Yolov4/config-xmish.yaml ../../../samples/detection
+./Yolov4_trt ../../../configs/Yolov4/config-xmish.yaml ../../../samples/detection_segmentation
 ```
 
 ## 6.Results

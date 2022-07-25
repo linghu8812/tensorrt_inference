@@ -42,15 +42,15 @@ make -j
 ## 5.Run ScaledYOLOv4_trt
 - inference with yolov4-p5
 ```
-./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p5.yaml ../../../samples/detection
+./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p5.yaml ../../../samples/detection_segmentation
 ```
 - inference with yolov4-p6
 ```
-./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p6.yaml ../../../samples/detection
+./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p6.yaml ../../../samples/detection_segmentation
 ```
 - inference with yolov4-p7
 ```
-./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p7.yaml ../../../samples/detection
+./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p7.yaml ../../../samples/detection_segmentation
 ```
 
 ## 6.Results

@@ -27,7 +27,7 @@ For more information, please refer this blog: [https://blog.csdn.net/linghu8812/
 ## 4.Run YOLOv6_trt
 - inference with yolov6s
 ```
-./YOLOv6_trt ../../../configs/YOLOv6/config.yaml ../../../samples/detection
+./YOLOv6_trt ../../../configs/YOLOv6/config.yaml ../../../samples/detection_segmentation
 ```
 
 ## 5.Results:

@@ -22,7 +22,7 @@ make -j
 
 ## 4.run nanodet_trt
 ```
-./nanodet_trt ../../../configs/nanodet/config.yaml ../../../samples/detection
+./nanodet_trt ../../../configs/nanodet/config.yaml ../../../samples/detection_segmentation
 ```
 
 ## 5.Results:

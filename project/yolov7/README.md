@@ -30,7 +30,7 @@ make -j
 ## 4.Run yolov7_trt
 - inference with yolov7
 ```bash
-./yolov7_trt ../../../configs/yolov7/config.yaml ../../../samples/detection
+./yolov7_trt ../../../configs/yolov7/config.yaml ../../../samples/detection_segmentation
 ```
 
 for model such as yolov7-w6  the config file is like this:

@@ -30,6 +30,7 @@ models|framework|instruction
 [scrfd](project/scrfd)|PyTorch|PyTorch scrfd face detection example
 [seresnext](project/seresnext)|PyTorch|PyTorch example
 [Swin-Transformer](project/Swin-Transformer)|timm|timm image classification example
+[yolor](project/yolor)|PyTorch|PyTorch and object detection example
 [Yolov4](project/Yolov4)|darknet|darknet and object detection example
 [yolov5](project/yolov5)|PyTorch|PyTorch and object detection example
 [YOLOv6](project/YOLOv6)|PyTorch|PyTorch and object detection example

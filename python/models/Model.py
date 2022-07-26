@@ -46,7 +46,7 @@ class Model:
     def allocate_buffers(self):
         self.stream = cuda.Stream()
         for binding in self.engine:
-            size = trt.volume(self.engine.get_binding_shape(binding)) * self.engine.max_batch_size
+            size = trt.volume(self.engine.get_binding_shape(binding))
             dtype = trt.nptype(self.engine.get_binding_dtype(binding))
             # Allocate host and device buffers
             host_mem = cuda.pagelocked_empty(size, dtype)

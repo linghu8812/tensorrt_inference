@@ -6,16 +6,16 @@ from .Detection import Detection, DetectRes, Bbox
 class YOLO(Detection):
     def __init__(self, config):
         super().__init__(config)
-        self.output_shape = (self.num_rows, self.CATEGORY + 5)
+        self.output_shape = (self.BATCH_SIZE, self.num_rows, self.CATEGORY + 5)
 
     def post_process(self, image_batch, outputs):
         vec_result = []
         max_wh = 7680
+        outputs = outputs[0].reshape(self.output_shape)
         for src_img, output in zip(image_batch, outputs):
             result = DetectRes()
             height, width = src_img.shape[:2]
             ratio = max(width / self.IMAGE_WIDTH, height / self.IMAGE_HEIGHT)
-            output = output.reshape(self.output_shape)
             index = output[:, 4] > self.obj_threshold
             conf, j = torch.from_numpy(output[index, 5:]).max(dim=1)
             conf *= output[index, 4]

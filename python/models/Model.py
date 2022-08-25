@@ -67,7 +67,7 @@ class Model:
             with trt.Builder(self.TRT_LOGGER) as builder, builder.create_network(
                     1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)) as network, \
                     trt.OnnxParser(network, self.TRT_LOGGER) as parser:
-                builder.max_workspace_size = 1 << 32  # 256MiB
+                builder.max_workspace_size = 1 << 33
                 builder.max_batch_size = self.BATCH_SIZE
                 builder.fp16_mode = True
                 # Parse model file
@@ -108,7 +108,7 @@ class Model:
             elif self.INPUT_CHANNEL == 3:
                 flt_img = src_img.copy()
             if self.resize == "directly":
-                flt_img = cv2.resize(flt_img, (self.IMAGE_WIDTH, self.IMAGE_HEIGHT))
+                flt_img = cv2.resize(flt_img, (self.IMAGE_WIDTH, self.IMAGE_HEIGHT)).astype(np.float32)
             elif self.resize == "keep_ratio":
                 height, width = src_img.shape[:2]
                 ratio = min(self.IMAGE_WIDTH / width, self.IMAGE_HEIGHT / height)

@@ -1,5 +1,6 @@
 import yaml
 from .ScaledYOLOv4 import ScaledYOLOv4
+from .YOLOv4 import Yolov4
 from .yolor import Yolor
 from .yolov5 import Yolov5
 from .YOLOv6 import YOLOv6
@@ -7,6 +8,7 @@ from .yolov7 import Yolov7
 
 __factory = {
     'ScaledYOLOv4': ScaledYOLOv4,
+    'Yolov4': Yolov4,
     'yolor': Yolor,
     'yolov5': Yolov5,
     'YOLOv6': YOLOv6,

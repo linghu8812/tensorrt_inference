@@ -13,7 +13,7 @@ docker build -t tensorrt_inference:0.1.0_rc .
 ## **Supported Models**
 
 download transfered ONNX models: [https://pan.baidu.com/s/1Ff_SA9Q66DUnZjSipPa74Q](https://pan.baidu.com/s/1Ff_SA9Q66DUnZjSipPa74Q), code: `opkp`
-![](weights/image.png)
+![](samples/resources/image.png)
 
 models|framework|instruction
 ---|---|---
@@ -41,3 +41,8 @@ models|framework|instruction
 [YOLOv6](project/YOLOv6)|PyTorch|PyTorch and object detection example
 [yolov7](project/yolov7)|PyTorch|PyTorch and object detection example
  
+ ## **Discussion Groups**
+
+ - **QQ group:** 588966055
+
+ ![](samples/resources/group.jpg =400x450)

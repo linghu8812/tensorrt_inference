@@ -83,11 +83,7 @@ std::vector<mmposeRes> mmpose::PostProcess(const std::vector<cv::Mat> &vec_Mat, 
             float *maxy = std::max(max_pos - IMAGE_WIDTH / 4, current_point);
             float y = (float)(max_pos - current_point) / ((float)IMAGE_WIDTH / 4.0f) +
                     (*miny > *maxy ? 0.25f : -0.25f);
-
-
-
-            float x = (max_pos - current_point) % (IMAGE_WIDTH / 4) + (*(max_pos + 1) > *(max_pos - 1) ? 0.25 : -0.25);
-            float y = (max_pos - current_point) / (IMAGE_WIDTH / 4) + (*(max_pos + IMAGE_WIDTH / 4) > *(max_pos - IMAGE_WIDTH / 4) ? 0.25 : -0.25);
+            
             key_points.key_points[number].x = int(x * ratio * 4);
             key_points.key_points[number].y = int(y * ratio * 4);
             key_points.key_points[number].number = number;

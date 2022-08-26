@@ -71,6 +71,21 @@ std::vector<mmposeRes> mmpose::PostProcess(const std::vector<cv::Mat> &vec_Mat, 
             float *current_point = current_person + feature_size * number;
             auto max_pos = std::max_element(current_point, current_point + feature_size);
             key_points.key_points[number].prob = *max_pos;
+            
+            float *end_point = current_point + feature_size - 1;
+            
+            float *minx = std::min(max_pos + 1, end_point);
+            float *maxx = std::max(max_pos - 1, current_point);
+            float x = (float)((max_pos - current_point) % (IMAGE_WIDTH / 4)) +
+                    (*(minx) > *(maxx) ? 0.25f : -0.25f);
+            
+            float *miny = std::min(end_point, (max_pos + IMAGE_WIDTH / 4));
+            float *maxy = std::max(max_pos - IMAGE_WIDTH / 4, current_point);
+            float y = (float)(max_pos - current_point) / ((float)IMAGE_WIDTH / 4.0f) +
+                    (*miny > *maxy ? 0.25f : -0.25f);
+
+
+
             float x = (max_pos - current_point) % (IMAGE_WIDTH / 4) + (*(max_pos + 1) > *(max_pos - 1) ? 0.25 : -0.25);
             float y = (max_pos - current_point) / (IMAGE_WIDTH / 4) + (*(max_pos + IMAGE_WIDTH / 4) > *(max_pos - IMAGE_WIDTH / 4) ? 0.25 : -0.25);
             key_points.key_points[number].x = int(x * ratio * 4);

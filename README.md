@@ -45,4 +45,4 @@ models|framework|instruction
 
  - **QQ group:** 588966055
 
- ![](samples/resources/group.jpg =400x450)
+ ![](samples/resources/group.jpg)

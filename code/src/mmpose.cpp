@@ -1,4 +1,5 @@
 #include "mmpose.h"
+#include <cmath>
 
 mmpose::mmpose(const YAML::Node &config) : KeyPoints(config) {
     num_key_points = config["num_key_points"].as<int>();
@@ -84,8 +85,8 @@ std::vector<mmposeRes> mmpose::PostProcess(const std::vector<cv::Mat> &vec_Mat, 
             float y = (float)(max_pos - current_point) / ((float)IMAGE_WIDTH / 4.0f) +
                     (*miny > *maxy ? 0.25f : -0.25f);
             
-            key_points.key_points[number].x = int(x * ratio * 4);
-            key_points.key_points[number].y = int(y * ratio * 4);
+            key_points.key_points[number].x = std::round(x * ratio * 4);
+            key_points.key_points[number].y = std::round(y * ratio * 4);
             key_points.key_points[number].number = number;
         }
         vec_key_points.push_back(key_points);

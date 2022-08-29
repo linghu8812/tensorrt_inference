@@ -13,21 +13,24 @@ git clone https://github.com/linghu8812/yolov5.git
 python3 export.py ---weights weights/yolov5s.pt --batch-size 10 --imgsz 640 --include onnx --simplify
 ```
 
-## 3.Build yolov5_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../project/
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.Run yolov5_trt
+## 4.Run tensorrt_inference
 - inference with yolov5s
 ```
-./yolov5_trt ../../../configs/yolov5/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference yolov5 ../configs/yolov5/config.yaml ../samples/detection_segmentation
 ```
 - inference with yolov5s6
 ```
-./yolov5_trt ../../../configs/yolov5/config_p6.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference yolov5 ../configs/yolov5/config_p6.yaml ../samples/detection_segmentation
 ```
 
 For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/109322729](https://blog.csdn.net/linghu8812/article/details/109322729)

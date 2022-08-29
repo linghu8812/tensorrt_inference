@@ -44,5 +44,3 @@ models|framework|instruction
  ## **Discussion Groups**
 
  - **QQ group:** 588966055
-
- ![](samples/resources/group.jpg =400x450)

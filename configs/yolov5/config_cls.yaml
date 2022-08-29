@@ -1,0 +1,14 @@
+yolov5_cls:
+    onnx_file:     "../weights/yolov5s-cls.onnx"
+    engine_file:   "../weights/yolov5s-cls.trt"
+    labels_file:   "../configs/labels/imagenet.names"
+    BATCH_SIZE:    1
+    INPUT_CHANNEL: 3
+    IMAGE_WIDTH:   224
+    IMAGE_HEIGHT:  224
+    image_order:   "BCHW"
+    channel_order: "BGR"
+    img_mean:      [ 0, 0, 0 ]
+    img_std:       [ 1, 1, 1 ]
+    alpha:         255.0
+    resize:        "directly"

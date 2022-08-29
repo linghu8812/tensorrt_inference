@@ -11,6 +11,8 @@ std::shared_ptr<Model> build_model(char **argv) {
     auto model = std::shared_ptr<Model>();
     if (model_arch == "yolov5")
         model = std::make_shared<YOLOv5>(root[model_arch]);
+    else if (model_arch == "yolov5_cls")
+        model = std::make_shared<YOLOv5_cls>(root[model_arch]);
     return model;
 }
 

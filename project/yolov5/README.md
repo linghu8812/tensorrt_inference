@@ -33,6 +33,11 @@ cd ../../bin/
 ./tensorrt_inference yolov5 ../configs/yolov5/config_p6.yaml ../samples/detection_segmentation
 ```
 
+- inference with yolov5-cls
+```
+./tensorrt_inference yolov5_cls ../configs/yolov5/config_cls.yaml ../samples/classification
+```
+
 For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/109322729](https://blog.csdn.net/linghu8812/article/details/109322729)
 
 ## 5.Results:

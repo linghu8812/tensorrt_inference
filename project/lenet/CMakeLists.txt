@@ -31,7 +31,7 @@ message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
 
 set(MODEL_INCLUDE ../../code/includes)
 set(YAML_INCLUDE ../../depends/yaml-cpp/include)
-set(MODEL_SRC ../../code/src/common.cpp  ../../code/src/build.cpp ../../code/src/model.cpp ../../code/src/classification.cpp ../../code/src/lenet.cpp)
+set(MODEL_SRC ../../code/src/common.cpp  ../../code/src/model.cpp ../../code/src/classification.cpp ../../code/src/lenet.cpp)
 
 set(YAML_LIB_DIR ../../depends/yaml-cpp/libs)
 

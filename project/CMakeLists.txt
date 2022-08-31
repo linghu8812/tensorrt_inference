@@ -9,11 +9,16 @@ find_package(CUDA REQUIRED)
 message(STATUS "Find CUDA include at ${CUDA_INCLUDE_DIRS}")
 message(STATUS "Find CUDA libraries: ${CUDA_LIBRARIES}")
 
+# OpenCV
+find_package(OpenCV REQUIRED)
+message(STATUS "Find OpenCV include at ${OpenCV_INCLUDE_DIRS}")
+message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
+
 set(MODEL_INCLUDE ../code/includes)
 set(YAML_INCLUDE ../depends/yaml-cpp/include)
 set(YAML_LIB_DIR ../depends/yaml-cpp/libs)
 
-include_directories(${CUDA_INCLUDE_DIRS} ${MODEL_INCLUDE} ${YAML_INCLUDE})
+include_directories(${CUDA_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${MODEL_INCLUDE} ${YAML_INCLUDE})
 link_directories(${YAML_LIB_DIR})
 
 add_subdirectory(alexnet)
@@ -40,9 +45,11 @@ add_subdirectory(yolov5)
 add_subdirectory(YOLOv6)
 add_subdirectory(yolov7)
 
+add_library(factory SHARED ./../code/src/build.cpp)
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin)
 add_executable(tensorrt_inference main.cpp)
-target_link_libraries(tensorrt_inference yaml-cpp alexnet arcface CenterFace efficientnet face_alignment fast-reid FCN
-        gender-age ghostnet lenet MiniFASNet mmpose nanodet RetinaFace ScaledYOLOv4 scrfd seresnext Swin-Transformer
-        yolor Yolov4 yolov5 YOLOv6 yolov7)
+target_link_libraries(tensorrt_inference yaml-cpp factory alexnet arcface CenterFace efficientnet face_alignment
+        fast-reid FCN gender-age ghostnet lenet MiniFASNet mmpose nanodet RetinaFace ScaledYOLOv4 scrfd seresnext
+        Swin-Transformer yolor Yolov4 yolov5 YOLOv6 yolov7)
 

@@ -8,14 +8,16 @@
 python3 export_onnx.py
 ```
 
-## 3.Build alexnet_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.run alexnet_trt
+## 4.run tensorrt_inference
 ```
-./alexnet_trt ../../../configs/alexnet/config.yaml ../../../samples/classification
+cd ../../bin/
+./tensorrt_inference alexnet ../configs/alexnet/config.yaml ../samples/classification
 ```

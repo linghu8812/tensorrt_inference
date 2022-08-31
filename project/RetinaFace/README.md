@@ -33,21 +33,24 @@ python3 export_onnx.py  --prefix ./model/mnet.25
 python3 export_onnx.py  --prefix ./model/mnet_cov2 --network net3l
 ```
 
-## 4.Build RetinaFace_trt Project
+## 4.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 5.Run RetinaFace_trt
+## 5.Run tensorrt_inference
 - inference with RetinaFace
 ```
-./RetinaFace_trt ../../../configs/RetinaFace/config.yaml ../../../samples/faces_detection
+cd ../../bin/
+./tensorrt_inference RetinaFace ../configs/RetinaFace/config.yaml ../samples/faces_detection
 ```
 - inference with RetinaFaceAntiCov
 ```
-./RetinaFace_trt ../../../configs/RetinaFace/config_anti.yaml ../../../samples/faces_detection
+cd ../../bin/
+./tensorrt_inference RetinaFace ../configs/RetinaFace/config_anti.yaml ../samples/faces_detection
 ```
 
 For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/110677016](https://blog.csdn.net/linghu8812/article/details/110677016)

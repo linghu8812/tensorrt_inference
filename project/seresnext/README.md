@@ -12,6 +12,7 @@ python3 export_onnx.py
 
 ## 3.Build seresnext_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -19,5 +20,6 @@ make -j
 
 ## 4.run seresnext_trt
 ```
-./seresnext_trt ../../../configs/seresnext/config.yaml ../../../samples/classification
+cd ../../bin/
+./tensorrt_inference seresnext ../configs/seresnext/config.yaml ../samples/classification
 ```

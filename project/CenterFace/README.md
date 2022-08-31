@@ -15,16 +15,18 @@ python3 export_onnx.py
 python3 export_onnx.py --pretrained ./centerface_bnmerged.onnx --onnx ./centerface_bnmerged_transpose.onnx
 ```
 
-## 3.Build CenterFace_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.Run CenterFace_trt
+## 4.Run tensorrt_inference
 ```
-./CenterFace_trt ../../../configs/CenterFace/config.yaml ../../../samples/faces_detection
+cd ../../bin/
+./tensorrt_inference CenterFace ../configs/CenterFace/config.yaml ../samples/faces_detection
 ```
 
 ## 5.Results

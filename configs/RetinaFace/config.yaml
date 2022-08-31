@@ -1,6 +1,6 @@
 RetinaFace:
-    onnx_file:     "../R50.onnx"
-    engine_file:   "../R50.trt"
+    onnx_file:     "../weights/R50.onnx"
+    engine_file:   "../weights/R50.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   640

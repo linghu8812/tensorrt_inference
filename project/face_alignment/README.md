@@ -9,16 +9,18 @@
 python3 export_onnx.py
 ```
 
-## 3.Build face_alignment_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.Run face_alignment_trt
+## 4.Run tensorrt_inference
 ```
-./face_alignment_trt ../../../configs/face_alignment/config.yaml ../../../samples/faces_recognition
+cd ../../bin/
+./tensorrt_inference face_alignment ../configs/face_alignment/config.yaml ../samples/faces_recognition
 ```
 
 ## 5.Results

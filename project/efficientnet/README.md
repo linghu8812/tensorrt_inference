@@ -18,6 +18,7 @@ python3 export_onnx.py
 
 ## 3.Build efficientnet_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -25,5 +26,6 @@ make -j
 
 ## 4.run efficientnet_trt
 ```
-./efficientnet_trt ../../../configs/efficientnet/config.yaml ../../../samples/classification
+cd ../../bin/
+./tensorrt_inference efficientnet ../configs/efficientnet/config.yaml ../samples/classification
 ```

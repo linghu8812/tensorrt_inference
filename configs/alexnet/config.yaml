@@ -1,7 +1,7 @@
 alexnet:
-    onnx_file:     "../alexnet.onnx"
-    engine_file:   "../alexnet.trt"
-    labels_file:   "../../../configs/labels/imagenet.names"
+    onnx_file:     "../weights/alexnet.onnx"
+    engine_file:   "../weights/alexnet.trt"
+    labels_file:   "../configs/labels/imagenet.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   224

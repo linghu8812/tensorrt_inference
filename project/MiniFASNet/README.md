@@ -16,6 +16,7 @@ python3 export_onnx.py --weights_file ./resources/anti_spoof_models/4_0_0_80x80_
 
 ## 3.Build MiniFASNet_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -23,15 +24,16 @@ make -j
 
 ## 4.Run MiniFASNet_trt
 ```
-./MiniFASNet_trt ../../../configs/MiniFASNet/config.yaml ../../../samples/antispoofing
+cd ../../bin/
+./tensorrt_inference MiniFASNet ../configs/MiniFASNet/config.yaml ../samples/antispoofing
 ```
 ## 5.Results
 
-sample|result
----|---
-0.jpg|fake
-1.jpg|fake
-2.jpg|real
-3.jpg|real
-4.jpg|fake
-5.jpg|fake
+name|sample|result
+---|---|---
+0.jpg|![](../../samples/antispoofing/0.jpg)|fake
+1.jpg|![](../../samples/antispoofing/1.jpg)|fake
+2.jpg|![](../../samples/antispoofing/2.jpg)|real
+3.jpg|![](../../samples/antispoofing/3.jpg)|real
+4.jpg|![](../../samples/antispoofing/4.jpg)|fake
+5.jpg|![](../../samples/antispoofing/5.jpg)|fake

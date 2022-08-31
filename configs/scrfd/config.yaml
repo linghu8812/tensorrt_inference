@@ -1,6 +1,6 @@
 scrfd:
-    onnx_file:     "../scrfd_10g_bnkps_shape640x640.onnx"
-    engine_file:   "../scrfd_10g_bnkps_shape640x640.trt"
+    onnx_file:     "../weights/scrfd_10g_bnkps_shape640x640.onnx"
+    engine_file:   "../weights/scrfd_10g_bnkps_shape640x640.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   640

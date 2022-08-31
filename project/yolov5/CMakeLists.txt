@@ -31,7 +31,7 @@ message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
 
 set(MODEL_INCLUDE ../../code/includes)
 set(YAML_INCLUDE ../../depends/yaml-cpp/include)
-set(MODEL_SRC ../../code/src/common.cpp ../../code/src/model.cpp ../../code/src/classification.cpp ../../code/src/detection.cpp ../../code/src/YOLO.cpp ../../code/src/yolov5.cpp)
+set(MODEL_SRC ../../code/src/common.cpp  ../../code/src/build.cpp ../../code/src/model.cpp ../../code/src/classification.cpp ../../code/src/detection.cpp ../../code/src/YOLO.cpp ../../code/src/yolov5.cpp)
 set(YAML_LIB_DIR ../../depends/yaml-cpp/libs)
 
 include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${MODEL_INCLUDE} ${YAML_INCLUDE})

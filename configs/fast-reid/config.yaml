@@ -1,6 +1,6 @@
 fastreid:
-    onnx_file:     "../mgn_R50-ibn.onnx"
-    engine_file:   "../mgn_R50-ibn.trt"
+    onnx_file:     "../weights/mgn_R50-ibn.onnx"
+    engine_file:   "../weights/mgn_R50-ibn.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   128

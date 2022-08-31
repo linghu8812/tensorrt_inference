@@ -15,6 +15,7 @@ python tools/export_onnx.py
 
 ## 3.Build nanodet_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -22,7 +23,8 @@ make -j
 
 ## 4.run nanodet_trt
 ```
-./nanodet_trt ../../../configs/nanodet/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference nanodet ../configs/nanodet/config.yaml ../samples/detection_segmentation
 ```
 
 ## 5.Results:

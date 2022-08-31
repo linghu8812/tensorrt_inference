@@ -22,6 +22,7 @@ python export.py --weights ./weights/yolor-w6.pt --simplify --grid --img-size 12
 
 ## 3.Build yolor_trt Project
 ```bash
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -30,7 +31,8 @@ make -j
 ## 4.Run yolor_trt
 - inference with yolor
 ```bash
-./yolor_trt ../../../configs/yolor/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference yolor ../configs/yolor/config.yaml ../samples/detection_segmentation
 ```
 
 ## 5.Results:

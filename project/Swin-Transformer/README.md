@@ -12,6 +12,7 @@ python3 export_onnx.py
 
 ## 3.Build Swin-Transformer_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -19,5 +20,6 @@ make -j
 
 ## 4.run Swin-Transformer_trt
 ```
-./Swin-Transformer_trt ../../../configs/Swin-Transformer/config.yaml ../../../samples/classification
+cd ../../bin/
+./tensorrt_inference Swin_Transformer ../configs/Swin-Transformer/config.yaml ../../../samples/classification
 ```

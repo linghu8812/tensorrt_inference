@@ -1,7 +1,7 @@
 efficientnet:
-    onnx_file:     "../efficientnet-b0.onnx"
-    engine_file:   "../efficientnet-b0.trt"
-    labels_file:   "../../../configs/labels/imagenet.names"
+    onnx_file:     "../weights/efficientnet-b0.onnx"
+    engine_file:   "../weights/efficientnet-b0.trt"
+    labels_file:   "../configs/labels/imagenet.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   224

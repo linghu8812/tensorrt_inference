@@ -1,6 +1,6 @@
 face_alignment:
-    onnx_file:     "../2d106det.onnx"
-    engine_file:   "../2d106det.trt"
+    onnx_file:     "../weights/2d106det.onnx"
+    engine_file:   "../weights/2d106det.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   192

@@ -11,17 +11,20 @@ cd fast-reid/tools/deploy
 python onnx_export.py --config-file root-path/bagtricks_R50/config.yml --name baseline_R50 --output outputs/onnx_model --opts MODEL.WEIGHTS root-path/logs/market1501/bagtricks_R50/model_final.pth
 ```
 
-## 3.Build fast-reid_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.run fast-reid_trt
+## 4.run tensorrt_inference
 ```
-./fast-reid_trt ../../../configs/fast-reid/config.yaml ../../../samples/pedestrian_reid
+cd ../../bin/
+./tensorrt_inference fastreid ../configs/fast-reid/config.yaml ../samples/pedestrian_reid
 ```
+
 **results:**
 
 result|![image](https://user-images.githubusercontent.com/36389436/180164109-da6836d2-84c3-428f-8423-b86bab61832a.png)|![image](https://user-images.githubusercontent.com/36389436/180164183-c07de53e-a824-44a8-9cbc-e39efc2747f9.png)|![image](https://user-images.githubusercontent.com/36389436/180164215-1faeffdf-d349-4fed-b0d7-1ba3561eb9f7.png)|![image](https://user-images.githubusercontent.com/36389436/180164269-43ce0eb9-dbee-4197-853e-570ad69dd081.png)|![image](https://user-images.githubusercontent.com/36389436/180164309-09a597e9-f19a-41b7-a801-b068713697d1.png)|![image](https://user-images.githubusercontent.com/36389436/180164340-4a50ef2a-5a13-4dcc-8109-08ef2af2d4ac.png)|![image](https://user-images.githubusercontent.com/36389436/180164388-aa3e7c2b-3197-4d3f-a295-3f2ff950a93c.png)|![image](https://user-images.githubusercontent.com/36389436/180164420-32a558e1-6a3d-43f8-aa2e-79eabdf4a09b.png)|![image](https://user-images.githubusercontent.com/36389436/180166036-622e6c48-a663-4bb3-a01f-5ad0df079272.png)|![image](https://user-images.githubusercontent.com/36389436/180165528-46c07e48-56b6-4dd2-b8ff-3bbb4c083db1.png)

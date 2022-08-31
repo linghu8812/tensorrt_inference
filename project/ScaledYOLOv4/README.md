@@ -34,6 +34,7 @@ export PYTHONPATH="$PWD" && python3 models/export_onnx.py --weights ./weights/yo
 
 ## 4.Build ScaledYOLOv4_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -42,15 +43,18 @@ make -j
 ## 5.Run ScaledYOLOv4_trt
 - inference with yolov4-p5
 ```
-./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p5.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference ScaledYOLOv4 ../configs/ScaledYOLOv4/config-p5.yaml ../samples/detection_segmentation
 ```
 - inference with yolov4-p6
 ```
-./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p6.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference ScaledYOLOv4 ../configs/ScaledYOLOv4/config-p6.yaml ../samples/detection_segmentation
 ```
 - inference with yolov4-p7
 ```
-./ScaledYOLOv4_trt ../../../configs/ScaledYOLOv4/config-p7.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference ScaledYOLOv4 ../configs/ScaledYOLOv4/config-p7.yaml ../samples/detection_segmentation
 ```
 
 ## 6.Results

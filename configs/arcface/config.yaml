@@ -1,6 +1,6 @@
 arcface:
-    onnx_file:     "../arcface_r100.onnx"
-    engine_file:   "../arcface_r100.trt"
+    onnx_file:     "../weights/arcface_r100.onnx"
+    engine_file:   "../weights/arcface_r100.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   112

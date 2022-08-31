@@ -1,7 +1,7 @@
 yolov7:
-    onnx_file:     "../yolov7-w6.onnx"
-    engine_file:   "../yolov7-w6.trt"
-    labels_file:   "../../../configs/labels/coco.names"
+    onnx_file:     "../weights/yolov7-w6.onnx"
+    engine_file:   "../weights/yolov7-w6.trt"
+    labels_file:   "../configs/labels/coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   1280

@@ -1,7 +1,7 @@
 ScaledYOLOv4:
-    onnx_file:     "../yolov4-p6.onnx"
-    engine_file:   "../yolov4-p6.trt"
-    labels_file:   "../../../configs/labels/coco.names"
+    onnx_file:     "../weights/yolov4-p6.onnx"
+    engine_file:   "../weights/yolov4-p6.trt"
+    labels_file:   "../configs/labels/coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   1280

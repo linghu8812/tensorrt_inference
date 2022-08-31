@@ -13,6 +13,7 @@ python3 export_onnx.py --input_shape 4 3 112 112
 
 ## 3.Build arcface_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -20,7 +21,8 @@ make -j
 
 ## 4.run arcface_trt
 ```
-./arcface_trt ../../../configs/arcface/config.yaml ../../../samples/faces_recognition
+cd ../../bin/
+./tensorrt_inference arcface ../configs/arcface/config.yaml ../samples/faces_recognition
 ```
 **results:**
 

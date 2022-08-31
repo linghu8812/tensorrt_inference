@@ -1,7 +1,7 @@
 Swin_Transformer:
-    onnx_file:     "../swin_tiny_patch4_window7_224.onnx"
-    engine_file:   "../swin_tiny_patch4_window7_224.trt"
-    labels_file:   "../../../configs/labels/imagenet.names"
+    onnx_file:     "../weights/swin_tiny_patch4_window7_224.onnx"
+    engine_file:   "../weights/swin_tiny_patch4_window7_224.trt"
+    labels_file:   "../configs/labels/imagenet.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   224

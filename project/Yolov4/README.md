@@ -43,6 +43,7 @@ python3 export_onnx.py --cfg_file cfg/yolov3-tiny.cfg --weights_file yolov3-tiny
 
 ## 4.Build Yolov4_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -51,15 +52,18 @@ make -j
 ## 5.Run Yolov4_trt
 - inference with yolov4
 ```
-./Yolov4_trt ../../../configs/Yolov4/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference Yolov4 ../configs/Yolov4/config.yaml ../samples/detection_segmentation
 ```
 - inference with yolov4-tiny
 ```
-./Yolov4_trt ../../../configs/Yolov4/config-tiny.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference Yolov4 ../configs/Yolov4/config-tiny.yaml ../samples/detection_segmentation
 ```
 - inference with yolov4x-mish
 ```
-./Yolov4_trt ../../../configs/Yolov4/config-xmish.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference Yolov4 ../configs/Yolov4/config-xmish.yaml ../samples/detection_segmentation
 ```
 
 ## 6.Results

@@ -22,6 +22,7 @@ python export.py --weights ./weights/yolov7-w6.pt --simplify --grid --img-size 1
 
 ## 3.Build yolov7_trt Project
 ```bash
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -30,15 +31,16 @@ make -j
 ## 4.Run yolov7_trt
 - inference with yolov7
 ```bash
-./yolov7_trt ../../../configs/yolov7/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference yolov7 ../configs/yolov7/config.yaml ../samples/detection_segmentation
 ```
 
 for model such as yolov7-w6  the config file is like this:
 ```yaml
 yolov7:
-    onnx_file:     "../yolov7-w6.onnx"
-    engine_file:   "../yolov7-w6.trt"
-    labels_file:   "../../../configs/labels/coco.names"
+    onnx_file:     "../weights/yolov7-w6.onnx"
+    engine_file:   "../weights/yolov7-w6.trt"
+    labels_file:   "../configs/labels/coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   1280

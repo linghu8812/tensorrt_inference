@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(yolov7_trt)
-
 set(CMAKE_CXX_STANDARD 14)
 
 # CUDA
@@ -33,15 +31,13 @@ message(STATUS "Find OpenCV libraries: ${OpenCV_LIBRARIES}")
 
 set(MODEL_INCLUDE ../../code/includes)
 set(YAML_INCLUDE ../../depends/yaml-cpp/include)
+set(MODEL_SRC ../../code/src/common.cpp  ../../code/src/build.cpp ../../code/src/model.cpp ../../code/src/detection.cpp ../../code/src/YOLO.cpp ../../code/src/yolov7.cpp)
 set(YAML_LIB_DIR ../../depends/yaml-cpp/libs)
 
 include_directories(${CUDA_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${MODEL_INCLUDE} ${YAML_INCLUDE})
-aux_source_directory(../../code/src MODEL_SRC)
 message(STATUS "source file list: ${MODEL_SRC}")
 link_directories(${YAML_LIB_DIR})
 
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin)
 add_library(yolov7 SHARED ${MODEL_SRC})
 target_link_libraries(yolov7 ${OpenCV_LIBRARIES} ${CUDA_LIBRARIES} ${TENSORRT_LIBRARY} yaml-cpp)
-
-add_executable(yolov7_trt main.cpp)
-target_link_libraries(yolov7_trt yaml-cpp yolov7)

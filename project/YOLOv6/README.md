@@ -17,6 +17,7 @@ or download the onnx model directly on the page: [https://github.com/meituan/YOL
 
 ## 3.Build YOLOv6_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -27,7 +28,8 @@ For more information, please refer this blog: [https://blog.csdn.net/linghu8812/
 ## 4.Run YOLOv6_trt
 - inference with yolov6s
 ```
-./YOLOv6_trt ../../../configs/YOLOv6/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference YOLOv6 ../configs/YOLOv6/config.yaml ../samples/detection_segmentation
 ```
 
 ## 5.Results:

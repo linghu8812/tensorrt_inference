@@ -1,7 +1,7 @@
 yolor:
-    onnx_file:     "../yolor-p6-paper-541.onnx"
-    engine_file:   "../yolor-p6-paper-541.trt"
-    labels_file:   "../../../configs/labels/coco.names"
+    onnx_file:     "../weights/yolor-p6-paper-541.onnx"
+    engine_file:   "../weights/yolor-p6-paper-541.trt"
+    labels_file:   "../configs/labels/coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   1280

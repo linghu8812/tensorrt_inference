@@ -15,6 +15,7 @@ python3 export_onnx.py
 
 ## 4.Build lenet_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -22,7 +23,8 @@ make -j
 
 ## 5.Run lenet_trt
 ```
-./lenet_trt ../../../configs/lenet/config.yaml ../../../samples/mnist
+cd ../../bin/
+./tensorrt_inference lenet ../configs/lenet/config.yaml ../samples/mnist
 ```
 
 ## 6.Benchmark(2080Ti)

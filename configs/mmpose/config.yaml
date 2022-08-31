@@ -1,6 +1,6 @@
 mmpose:
-    onnx_file:      "../hrnet_w48_coco_256x192.onnx"
-    engine_file:    "../hrnet_w48_coco_256x192.trt"
+    onnx_file:      "../weights/hrnet_w48_coco_256x192.onnx"
+    engine_file:    "../weights/hrnet_w48_coco_256x192.trt"
     BATCH_SIZE:     1
     INPUT_CHANNEL:  3
     IMAGE_WIDTH:    192

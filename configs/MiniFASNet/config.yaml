@@ -1,7 +1,7 @@
 MiniFASNet:
-    onnx_file:     "../2.7_80x80_MiniFASNetV2.onnx"
-    engine_file:   "../2.7_80x80_MiniFASNetV2.trt"
-    labels_file:   "../../../configs/labels/antispoofing.names"
+    onnx_file:     "../weights/2.7_80x80_MiniFASNetV2.onnx"
+    engine_file:   "../weights/2.7_80x80_MiniFASNetV2.trt"
+    labels_file:   "../configs/labels/antispoofing.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   80

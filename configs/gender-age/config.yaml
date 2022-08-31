@@ -1,6 +1,6 @@
 gender-age:
-    onnx_file:     "../gender-age.onnx"
-    engine_file:   "../gender-age.trt"
+    onnx_file:     "../weights/gender-age.onnx"
+    engine_file:   "../weights/gender-age.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   112

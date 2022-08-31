@@ -1,6 +1,6 @@
 RetinaFace:
-    onnx_file:     "../mnet_cov2.onnx"
-    engine_file:   "../mnet_cov2.trt"
+    onnx_file:     "../weights/mnet_cov2.onnx"
+    engine_file:   "../weights/mnet_cov2.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   640

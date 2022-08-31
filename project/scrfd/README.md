@@ -32,17 +32,19 @@ python scrfd2onnx.py ../configs/scrfd/scrfd_10g_bnkps.py ../model.pth --input-im
  python scrfd2onnx.py ../configs/scrfd/scrfd_500m_bnkps.py ../model.pth --input-img test.jpg --shape 640 640
 ```
 
-## 4.Build scrfd_trt Project
+## 4.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 5.Run scrfd_trt
+## 5.Run tensorrt_inference
 - inference with srcfd
 ```
-./scrfd_trt ../../../configs/scrfd/config.yaml ../../../samples/faces_detection
+cd ../../bin/
+./tensorrt_inference scrfd ../configs/scrfd/config.yaml ../samples/faces_detection
 ```
 
 For more information, please refer this blog: [https://blog.csdn.net/linghu8812/article/details/110677016](https://blog.csdn.net/linghu8812/article/details/110677016)

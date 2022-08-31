@@ -9,14 +9,16 @@
 python3 export_onnx.py
 ```
 
-## 3.Build gender-age_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.Run gender-age_trt
+## 4.Run tensorrt_inference
 ```
-./gender-age_trt ../../../configs/gender-age/config.yaml ../../../samples/faces_recognition
+cd ../../bin/
+./tensorrt_inference gender-age ../configs/gender-age/config.yaml ../samples/faces_recognition
 ```

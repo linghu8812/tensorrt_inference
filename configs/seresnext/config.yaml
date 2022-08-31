@@ -1,7 +1,7 @@
 seresnext:
-    onnx_file:     "../se_resnext101_32x4d.onnx"
-    engine_file:   "../se_resnext101_32x4d.trt"
-    labels_file:   "../../../configs/labels/imagenet.names"
+    onnx_file:     "../weights/se_resnext101_32x4d.onnx"
+    engine_file:   "../weights/se_resnext101_32x4d.trt"
+    labels_file:   "../configs/labels/imagenet.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   224

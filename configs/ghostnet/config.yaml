@@ -1,7 +1,7 @@
 ghostnet:
-    onnx_file:     "../ghostnet.onnx"
-    engine_file:   "../ghostnet.trt"
-    labels_file:   "../../../configs/labels/imagenet.names"
+    onnx_file:     "../weights/ghostnet.onnx"
+    engine_file:   "../weights/ghostnet.trt"
+    labels_file:   "../configs/labels/imagenet.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   224

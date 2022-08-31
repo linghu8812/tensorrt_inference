@@ -1,6 +1,6 @@
 CenterFace:
-    onnx_file:     "../centerface_transpose.onnx"
-    engine_file:   "../centerface_transpose.trt"
+    onnx_file:     "../weights/centerface_transpose.onnx"
+    engine_file:   "../weights/centerface_transpose.trt"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   640

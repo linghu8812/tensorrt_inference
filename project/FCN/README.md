@@ -9,16 +9,18 @@
 python3 export_onnx.py
 ```
 
-## 3.Build FCN_trt Project
+## 3.Build tensorrt_inference Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
 ```
 
-## 4.Run FCN_trt
+## 4.Run tensorrt_inference
 ```
-./FCN_trt ../../../configs/FCN/config.yaml ../../../samples/detection_segmentation
+cd ../../bin/
+./tensorrt_inference FCN ../configs/FCN/config.yaml ../samples/detection_segmentation
 ```
 
 ## 5.Results

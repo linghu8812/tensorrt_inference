@@ -15,7 +15,7 @@ python3 export.py ---weights weights/yolov5s.pt --batch-size 10 --imgsz 640 --in
 
 ## 3.Build tensorrt_inference Project
 ```
-cd ../project/
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -35,6 +35,7 @@ cd ../../bin/
 
 - inference with yolov5-cls
 ```
+cd ../../bin/
 ./tensorrt_inference yolov5_cls ../configs/yolov5/config_cls.yaml ../samples/classification
 ```
 

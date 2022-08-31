@@ -12,6 +12,7 @@ python3 export_onnx.py
 
 ## 3.Build ghostnet_trt Project
 ```
+cd ../  # in project directory
 mkdir build && cd build
 cmake ..
 make -j
@@ -19,5 +20,6 @@ make -j
 
 ## 4.run ghostnet_trt
 ```
-./ghostnet_trt ../../../configs/ghostnet/config.yaml ../../../samples/classification
+cd ../../bin/
+./tensorrt_inference ghostnet ../configs/ghostnet/config.yaml ../samples/classification
 ```

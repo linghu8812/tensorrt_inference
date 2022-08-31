@@ -1,7 +1,7 @@
 Yolov4:
-    onnx_file:     "../yolov4x-mish.onnx"
-    engine_file:   "../yolov4x-mish.trt"
-    labels_file:   "../../../configs/labels/coco.names"
+    onnx_file:     "../weights/yolov4x-mish.onnx"
+    engine_file:   "../weights/yolov4x-mish.trt"
+    labels_file:   "../configs/labels/coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3
     IMAGE_WIDTH:   672

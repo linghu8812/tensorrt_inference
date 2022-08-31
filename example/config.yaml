@@ -1,6 +1,6 @@
 yolov5:
-    onnx_file:     "../yolov5s.onnx"
-    engine_file:   "../yolov5s.trt"
+    onnx_file:     "../../weights/yolov5s.onnx"
+    engine_file:   "../../weights/yolov5s.trt"
     labels_file:   "../../configs/labels/coco.names"
     BATCH_SIZE:    1
     INPUT_CHANNEL: 3

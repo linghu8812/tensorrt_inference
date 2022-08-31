@@ -10,9 +10,40 @@ see [INSTALL.md](INSTALL.md)
 docker build -t tensorrt_inference:0.1.0_rc .
 ```
 
+## **How to Use**
+
+- Build tensorrt_inference project:
+```
+git clone https://github.com/linghu8812/tensorrt_inference.git
+cd tensorrt_inference/project
+mkdir build && cd build
+cmake ..
+make -j
+```
+after these steps, the executable program `tensorrt_inference` and all support model shared libraries have been built.
+
+- Run tensorrt_inference
+
+```
+./tensorrt_inference
+```
+it will show:
+```
+Please design model arch, config file and folder name!
+```
+
+- Inference with models, take **yolov5** model as example, put `yolov5s.onnx` model into `weights` folder:
+
+```
+cd ../../bin/
+./tensorrt_inference yolov5 ../configs/yolov5/config.yaml ../samples/detection_segmentation
+```
+
+Use one model library example can reference here [example](example)
+
 ## **Supported Models**
 
-download transfered ONNX models: [https://pan.baidu.com/s/1Ff_SA9Q66DUnZjSipPa74Q](https://pan.baidu.com/s/1Ff_SA9Q66DUnZjSipPa74Q), code: `opkp`
+download transfered ONNX models, and put them into folder `weights`: [https://pan.baidu.com/s/1Ff_SA9Q66DUnZjSipPa74Q](https://pan.baidu.com/s/1Ff_SA9Q66DUnZjSipPa74Q), code: `opkp`
 ![](samples/resources/image.png)
 
 models|framework|instruction

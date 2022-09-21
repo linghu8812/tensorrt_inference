@@ -8,7 +8,7 @@
 
 ## 2.Export ONNX Model
 ```
-python3 export_onnx.py --input_shape 4 3 112 112
+python3 export_onnx.py --input_shape 1 3 112 112
 ```
 
 ## 3.Build arcface_trt Project

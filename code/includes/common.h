@@ -12,6 +12,7 @@
 #include "NvOnnxParser.h"
 #include "logging.h"
 #include <map>
+#include <chrono>
 
 // These is necessary if we want to be able to write 1_GiB instead of 1.0_GiB.
 // Since the return type is signed, -1_GiB will work as expected.

@@ -20,11 +20,15 @@ Model::Model(const YAML::Node &config) {
     resize = config["resize"].as<std::string>();
 }
 
-Model::~Model() = default;
+Model::~Model() {
+    context->destroy();
+    engine->destroy();
+    builder->destroy();
+}
 
 void Model::OnnxToTRTModel() {
     // create the builder
-    nvinfer1::IBuilder *builder = nvinfer1::createInferBuilder(gLogger.getTRTLogger());
+    builder = nvinfer1::createInferBuilder(gLogger.getTRTLogger());
     assert(builder != nullptr);
 
     const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
@@ -56,7 +60,7 @@ void Model::OnnxToTRTModel() {
     file.close();
     // then close everything down
     network->destroy();
-    builder->destroy();
+    config->destroy();
 }
 
 bool Model::ReadTrtFile() {
@@ -172,7 +176,7 @@ void Model::ModelInference(std::vector<float> image_data, float *output) {
     cudaMemcpyAsync(buffers[0], image_data.data(), bufferSize[0], cudaMemcpyHostToDevice, stream);
 
     // do inference
-    context->execute(BATCH_SIZE, buffers);
+    context->executeV2(buffers);
     cudaMemcpyAsync(output, buffers[1], bufferSize[1], cudaMemcpyDeviceToHost, stream);
     cudaStreamSynchronize(stream);
 }

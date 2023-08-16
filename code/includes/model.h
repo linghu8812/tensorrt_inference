@@ -33,6 +33,7 @@ protected:
     int IMAGE_HEIGHT;
     nvinfer1::ICudaEngine *engine = nullptr;
     nvinfer1::IExecutionContext *context = nullptr;
+    nvinfer1::IBuilder *builder = nullptr;
     void *buffers[2];
     std::vector<int64_t> bufferSize;
     cudaStream_t stream;

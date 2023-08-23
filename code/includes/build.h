@@ -28,6 +28,7 @@
 #include "yolov5.h"
 #include "YOLOv6.h"
 #include "yolov7.h"
+#include "yolov8.h"
 
 std::shared_ptr<Model> build_model(char **argv);
 

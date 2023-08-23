@@ -57,6 +57,8 @@ std::shared_ptr<Model> build_model(char **argv) {
         model = std::make_shared<YOLOv6>(root[model_arch]);
     else if (model_arch == "yolov7")
         model = std::make_shared<yolov7>(root[model_arch]);
+    else if (model_arch == "yolov8")
+        model = std::make_shared<YOLOv8>(root[model_arch]);
     else
         std::cout << "No model arch matched!" << std::endl;
     return model;

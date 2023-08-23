@@ -28,4 +28,4 @@ RUN bash -xc "curl -O https://github.com/opencv/opencv/archive/4.7.0.zip && unzi
 
 # pip3 安装
 RUN python3 -m pip install -U pip -i https://pypi.tuna.tsinghua.edu.cn/simple && pip3 install torch torchvision mxnet-cu102 onnx-simplifier -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    && pip3 install --ignore-installed -U PyYAML -i https://pypi.tuna.tsinghua.edu.cn/simple
+    && pip3 install ultralytics -i https://pypi.tuna.tsinghua.edu.cn/simple && pip3 install --ignore-installed -U PyYAML -i https://pypi.tuna.tsinghua.edu.cn/simple

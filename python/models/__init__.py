@@ -5,6 +5,7 @@ from .yolor import Yolor
 from .yolov5 import Yolov5
 from .YOLOv6 import YOLOv6
 from .yolov7 import Yolov7
+from .yolov8 import Yolov8
 
 __factory = {
     'ScaledYOLOv4': ScaledYOLOv4,
@@ -13,6 +14,7 @@ __factory = {
     'yolov5': Yolov5,
     'YOLOv6': YOLOv6,
     'yolov7': Yolov7,
+    'yolov8': Yolov8,
 }
 
 

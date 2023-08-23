@@ -66,10 +66,12 @@ class Model:
             """Takes an ONNX file and creates a TensorRT engine to run inference with"""
             with trt.Builder(self.TRT_LOGGER) as builder, builder.create_network(
                     1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)) as network, \
-                    trt.OnnxParser(network, self.TRT_LOGGER) as parser:
-                builder.max_workspace_size = 1 << 33
+                    builder.create_builder_config() as config, \
+                    trt.OnnxParser(network, self.TRT_LOGGER) as parser, \
+                    trt.Runtime(self.TRT_LOGGER) as runtime:
+                config.max_workspace_size = 1 << 33
                 builder.max_batch_size = self.BATCH_SIZE
-                builder.fp16_mode = True
+                config.set_flag(trt.BuilderFlag.FP16)
                 # Parse model file
                 if not os.path.exists(self.onnx_file):
                     print('ONNX file {} not found, please run export_onnx.py first to generate it.'.format(
@@ -81,7 +83,10 @@ class Model:
                     parser.parse(model.read())
                 print('Completed parsing of ONNX file')
                 print('Building an engine from file {}; this may take a while...'.format(self.onnx_file))
-                self.engine = builder.build_cuda_engine(network)
+                network.get_input(0).shape = [self.BATCH_SIZE, self.INPUT_CHANNEL,
+                                              self.IMAGE_HEIGHT, self.IMAGE_WIDTH]
+                plan = builder.build_serialized_network(network, config)
+                self.engine = runtime.deserialize_cuda_engine(plan)
                 print("Completed creating Engine")
                 with open(self.engine_file, "wb") as f:
                     f.write(self.engine.serialize())

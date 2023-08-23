@@ -71,6 +71,7 @@ models|framework|instruction
 [yolov5](project/yolov5)|PyTorch|PyTorch and object detection example
 [YOLOv6](project/YOLOv6)|PyTorch|PyTorch and object detection example
 [yolov7](project/yolov7)|PyTorch|PyTorch and object detection example
+[yolov8](project/yolov8)|ultralytics|ultralytics object detection example
  
  ## **Discussion Groups**
 

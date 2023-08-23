@@ -44,6 +44,7 @@ add_subdirectory(Yolov4)
 add_subdirectory(yolov5)
 add_subdirectory(YOLOv6)
 add_subdirectory(yolov7)
+add_subdirectory(yolov8)
 
 add_library(factory SHARED ./../code/src/build.cpp)
 
@@ -51,5 +52,5 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin)
 add_executable(tensorrt_inference main.cpp)
 target_link_libraries(tensorrt_inference yaml-cpp factory alexnet arcface CenterFace efficientnet face_alignment
         fast-reid FCN gender-age ghostnet lenet MiniFASNet mmpose nanodet RetinaFace ScaledYOLOv4 scrfd seresnext
-        Swin-Transformer yolor Yolov4 yolov5 YOLOv6 yolov7)
+        Swin-Transformer yolor Yolov4 yolov5 YOLOv6 yolov7 yolov8)
 
